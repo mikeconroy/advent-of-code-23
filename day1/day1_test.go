@@ -14,7 +14,7 @@ func TestPart1(t *testing.T) {
 }
 
 func TestPart2(t *testing.T) {
-	input := utils.ReadFileIntoSlice("input_2_test")
+	input := utils.ReadFileIntoSlice("input_test_2")
 	if part2(input) != "281" {
 		t.Fatal()
 	}

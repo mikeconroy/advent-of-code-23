@@ -14,4 +14,5 @@
 
 ### Build & Run
 `go build -o bin/aoc23`
+
 `bin/aoc23`

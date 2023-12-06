@@ -1,15 +1,21 @@
 package day1
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/mikeconroy/advent-of-code-23/utils"
+)
 
 func TestPart1(t *testing.T) {
-	if part1() != "Part 1" {
+	input := utils.ReadFileIntoSlice("input_test")
+	if part1(input) != "142" {
 		t.Fatal()
 	}
 }
 
 func TestPart2(t *testing.T) {
-	if part1() != "Part 1" {
+	input := utils.ReadFileIntoSlice("input_2_test")
+	if part2(input) != "281" {
 		t.Fatal()
 	}
 }

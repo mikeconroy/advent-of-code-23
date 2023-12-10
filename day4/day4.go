@@ -44,12 +44,12 @@ func matchCount(card ScratchCard) (matchingNumberCount int) {
 	return matchingNumberCount
 }
 
-/*
- *	Cards will never make you copy a card past the end of the table.
- */
 func part2(cards []ScratchCard) string {
 	copies := make(map[int]int)
 	var toProcess Stack
+
+	// Cache is used to improve performance by saving us from checking for Matches on a card more than once.
+	countsCache := make(map[int]int)
 
 	for id := range cards {
 		toProcess.Push(id)
@@ -58,8 +58,12 @@ func part2(cards []ScratchCard) string {
 
 	for len(toProcess) > 0 {
 		cardId := toProcess.Pop()
-		matchCount := matchCount(cards[cardId])
-		for i := 1; i <= matchCount; i++ {
+		count, exists := countsCache[cardId]
+		if !exists {
+			count = matchCount(cards[cardId])
+			countsCache[cardId] = count
+		}
+		for i := 1; i <= count; i++ {
 			copies[cardId+i] = copies[cardId+i] + 1
 			toProcess.Push(cardId + i)
 		}

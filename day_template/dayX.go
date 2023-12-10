@@ -1,4 +1,4 @@
-package day_template
+package dayX
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 )
 
 func Run() (string, string) {
-	input := utils.ReadFileIntoSlice("day3/input")
+	input := utils.ReadFileIntoSlice("dayX/input")
 	return part1(input), part2(input)
 }
 

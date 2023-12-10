@@ -1,4 +1,4 @@
-package day_template
+package dayX
 
 import (
 	"testing"

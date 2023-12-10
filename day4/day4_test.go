@@ -17,7 +17,7 @@ func TestDay4Part1(t *testing.T) {
 func TestDay4Part2(t *testing.T) {
 	input := utils.ReadFileIntoSlice("input_test")
 	cards := inputToCards(input)
-	if part2(cards) != "0" {
-		t.Fatal("Day X - Part 2 output should be 0")
+	if part2(cards) != "30" {
+		t.Fatal("Day X - Part 2 output should be 30")
 	}
 }

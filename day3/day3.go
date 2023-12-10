@@ -40,6 +40,7 @@ func part1(eng Engine) string {
 	return fmt.Sprint(result)
 }
 
+// The approach taken in Part 1 made Part 2 easier (luckily).
 func part2(eng Engine) string {
 	gears := eng.FindSymbol('*')
 
@@ -99,8 +100,7 @@ type adjNumber struct {
 	y            int
 }
 
-func (eng Engine) FindSymbols() []position {
-	var symbols []position
+func (eng Engine) FindSymbols() (symbols []position) {
 	for y, row := range eng.schematic {
 		for x, char := range row {
 			// Check if it's a symbol.
@@ -114,8 +114,7 @@ func (eng Engine) FindSymbols() []position {
 	return symbols
 }
 
-func (eng Engine) FindSymbol(sym rune) []position {
-	var symbols []position
+func (eng Engine) FindSymbol(sym rune) (symbols []position) {
 	for y, row := range eng.schematic {
 		for x, char := range row {
 			if char == sym {
@@ -126,8 +125,7 @@ func (eng Engine) FindSymbol(sym rune) []position {
 	return symbols
 }
 
-func (eng Engine) GetAdjacents(pos position) []position {
-	var adjacents []position
+func (eng Engine) GetAdjacents(pos position) (adjacents []position) {
 	for yOffset := -1; yOffset < 2; yOffset++ {
 		for xOffset := -1; xOffset < 2; xOffset++ {
 			newX := pos.x + xOffset
@@ -151,20 +149,13 @@ func (eng Engine) NumberAt(pos position) adjNumber {
 	var xStart, xEnd int
 	y := pos.y
 
-	for x := pos.x; x >= 0; x-- {
-		if unicode.IsDigit(eng.schematic[y][x]) {
-			xStart = x
-		} else {
-			break
-		}
+	// Inlined the unicode.IsDigit check into For Loop Condition.
+	for x := pos.x; x >= 0 && unicode.IsDigit(eng.schematic[y][x]); x-- {
+		xStart = x
 	}
 
-	for x := pos.x; x < len(eng.schematic); x++ {
-		if unicode.IsDigit(eng.schematic[y][x]) {
-			xEnd = x
-		} else {
-			break
-		}
+	for x := pos.x; x < len(eng.schematic) && unicode.IsDigit(eng.schematic[y][x]); x++ {
+		xEnd = x
 	}
 
 	var valStr string

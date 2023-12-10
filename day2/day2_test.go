@@ -6,7 +6,7 @@ import (
 	"github.com/mikeconroy/advent-of-code-23/utils"
 )
 
-func TestPart1(t *testing.T) {
+func TestDay2Part1(t *testing.T) {
 	input := utils.ReadFileIntoSlice("input_test")
 
 	if part1(input) != "8" {
@@ -14,7 +14,7 @@ func TestPart1(t *testing.T) {
 	}
 }
 
-func TestPart2(t *testing.T) {
+func TestDay2Part2(t *testing.T) {
 	input := utils.ReadFileIntoSlice("input_test")
 	if part2(input) != "2286" {
 		t.Fatal()

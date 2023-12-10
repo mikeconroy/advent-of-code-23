@@ -13,7 +13,6 @@ func Run() (string, string) {
 	return part1(input), part2(input)
 }
 
-// 3117 is too high
 func part1(input []string) string {
 	red, green, blue := 12, 13, 14
 

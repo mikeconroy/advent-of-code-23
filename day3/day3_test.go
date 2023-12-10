@@ -17,7 +17,7 @@ func TestDay3Part1(t *testing.T) {
 func TestDay3Part2(t *testing.T) {
 	input := utils.ReadFileIntoSlice("input_test")
 	eng := LoadSchematic(input)
-	if part2(eng) != "0" {
+	if part2(eng) != "467835" {
 		t.Fatal("Day 3 - Part 2 output should be xxx")
 	}
 }

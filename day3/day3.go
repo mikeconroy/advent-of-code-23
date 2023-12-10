@@ -41,7 +41,28 @@ func part1(eng Engine) string {
 }
 
 func part2(eng Engine) string {
-	return fmt.Sprint(0)
+	gears := eng.FindSymbol('*')
+
+	var gearRatioTotal int
+	for _, gear := range gears {
+		validNums := make(map[adjNumber]bool)
+		adjacents := eng.GetAdjacents(gear)
+		gearRatio := 1
+		for _, adj := range adjacents {
+			if unicode.IsDigit(adj.char) {
+				num := eng.NumberAt(adj)
+				if validNums[num] != true {
+					validNums[num] = true
+					gearRatio *= num.num
+				}
+			}
+		}
+		if len(validNums) == 2 {
+			gearRatioTotal += gearRatio
+		}
+	}
+
+	return fmt.Sprint(gearRatioTotal)
 }
 
 type Engine struct {
@@ -86,6 +107,18 @@ func (eng Engine) FindSymbols() []position {
 			// A symbol is any char that's not a . and not a digit.
 			// if char != '.' && (char <= 48 || char > 58) {
 			if char != '.' && !unicode.IsDigit(char) {
+				symbols = append(symbols, position{char, x, y})
+			}
+		}
+	}
+	return symbols
+}
+
+func (eng Engine) FindSymbol(sym rune) []position {
+	var symbols []position
+	for y, row := range eng.schematic {
+		for x, char := range row {
+			if char == sym {
 				symbols = append(symbols, position{char, x, y})
 			}
 		}

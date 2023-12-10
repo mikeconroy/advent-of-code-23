@@ -44,53 +44,30 @@ func matchCount(card ScratchCard) (matchingNumberCount int) {
 	return matchingNumberCount
 }
 
+/*
+ *	The performance of this Part has been improved since first implementation.
+ *  The main improvement was recognising that the Stack wasn't required. Previously, a stack was used to track cards yet to be processed,
+ *  each copy of a card would be added to the stack and be processed. This meant each copy of a card was processed multiple times despite always giving the same results.
+ *  Instead we can process the cards in order (1, 2, 3...) and multiply the counts added to future cards by the number of copies of the current card.
+ *  This would work because we never add copies of previous cards.
+ *  E.g. we would get to Card 3 and we may have 3 instances of Card 3 to process (1 original + 1 copy from Card 1 + 1 Copy from Card 2)
+ *  Then if our matchCount was 4 we can add 3 copies of Cards 4, 5, 6 and 7 to the copies map.
+ *  Previously we were just adding 1 copy and repeating the processing 3 times.
+ */
 func part2(cards []ScratchCard) string {
 	copies := make(map[int]int)
-	var toProcess Stack
-
-	// Cache is used to improve performance by saving us from checking for Matches on a card more than once.
-	countsCache := make(map[int]int)
+	totalCards := len(cards)
 
 	for id := range cards {
-		toProcess.Push(id)
 		copies[id] = copies[id] + 1
-	}
-
-	for len(toProcess) > 0 {
-		cardId := toProcess.Pop()
-		count, exists := countsCache[cardId]
-		if !exists {
-			count = matchCount(cards[cardId])
-			countsCache[cardId] = count
-		}
-		for i := 1; i <= count; i++ {
-			copies[cardId+i] = copies[cardId+i] + 1
-			toProcess.Push(cardId + i)
+		matches := matchCount(cards[id])
+		for i := 1; i <= matches; i++ {
+			copies[id+i] = copies[id+i] + copies[id]
+			totalCards += copies[id]
 		}
 	}
 
-	total := 0
-	for _, val := range copies {
-		total += val
-	}
-
-	return fmt.Sprint(total)
-}
-
-type Stack []int
-
-func (s *Stack) Push(val int) {
-	*s = append(*s, val)
-}
-
-func (s *Stack) Pop() int {
-	l := len(*s)
-	if l == 0 {
-		return -1
-	}
-	poppedVal := (*s)[l-1]
-	*s = (*s)[:l-1]
-	return poppedVal
+	return fmt.Sprint(totalCards)
 }
 
 func inputToCards(input []string) (cards []ScratchCard) {

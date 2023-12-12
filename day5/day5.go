@@ -47,8 +47,61 @@ func part1(input []string) string {
 	return fmt.Sprint(smallestLoc)
 }
 
+// Seeds are input as pairs:
+//
+//	First value is the start of a seed range
+//	Second value is the length of the range.
+//
+// Now calculate the lowest location possible based on all these seeds.
 func part2(input []string) string {
-	return fmt.Sprint(0)
+	// Not feasible to run Part 1 logic on every single seed possible (9 digit ranges)
+
+	// Can we work backwards - from Locations to Seeds?
+	// Identify the lowest possible location and check if feasible? Still large ranges of Locations.
+
+	// Sets / Algorithm that recognises Range Overlaps.
+	// May be partial overlaps and multiple overlaps. Won't tell us the destination value or whether it's higher or lower.
+
+	// Reduce inputs/ranges based on once a higher value is found - remove it as an option.
+
+	// We only care about numbers on the edge of ranges?
+	// Numbers not in a range are themselves.
+	// Numbers in a range would be the same (n+1) for most others...
+
+	// Work through each type and treat ranges as a single unit.
+	// At the end we should end up with the possible ranges of Locations.
+	// Select the range with the lowest start number.
+	alm := loadAlmanac(input)
+
+	// Holds the ranges possible at the end of each step.
+	var currentRanges []RangeMap
+	// Load the seed ranges
+	for i := 0; i < len(alm.seeds); i++ {
+		if i%2 == 0 {
+			seeds := RangeMap{
+				sourceStart: alm.seeds[i],
+				sourceEnd:   alm.seeds[i] + alm.seeds[i+1] - 1,
+				rangeLength: alm.seeds[i+1],
+			}
+			currentRanges = append(currentRanges, seeds)
+		}
+	}
+	currentRanges = findPossibleRanges(currentRanges, alm.seedToSoil)
+	currentRanges = findPossibleRanges(currentRanges, alm.soilToFertilizer)
+	currentRanges = findPossibleRanges(currentRanges, alm.fertilizerToWater)
+	currentRanges = findPossibleRanges(currentRanges, alm.waterToLight)
+	currentRanges = findPossibleRanges(currentRanges, alm.lightToTemperature)
+	currentRanges = findPossibleRanges(currentRanges, alm.temperatureToHumidity)
+	currentRanges = findPossibleRanges(currentRanges, alm.humidityToLocation)
+
+	lowestStart := math.MaxInt
+	for _, possibleRange := range currentRanges {
+		if possibleRange.sourceStart < lowestStart {
+			lowestStart = possibleRange.sourceStart
+		}
+	}
+
+	return fmt.Sprint(lowestStart)
 }
 
 // Need to store the ranges as the size of them is big.
@@ -65,7 +118,9 @@ type Almanac struct {
 
 type RangeMap struct {
 	sourceStart      int
+	sourceEnd        int
 	destinationStart int
+	destinationEnd   int
 	rangeLength      int
 }
 
@@ -95,7 +150,9 @@ func loadAlmanac(input []string) Almanac {
 			length, _ := strconv.Atoi(strs[2])
 			rangeMapping := RangeMap{
 				sourceStart:      source,
+				sourceEnd:        source + length - 1,
 				destinationStart: dest,
+				destinationEnd:   dest + length - 1,
 				rangeLength:      length,
 			}
 			switch currentMapType {
@@ -144,4 +201,98 @@ func findSourceInRanges(source int, ranges []RangeMap) int {
 		}
 	}
 	return source
+}
+
+// VERY MESSY CODE!!!!
+// Takes a current set of ranges & returns new ranges based on ranges in destRanges.
+// E.g. currRanges: [1-3, 7-9, 20-21] destRanges; [2-3, 19-22]
+// Becomes: [1-1, 2-3, 7-9, 20-21]
+//
+// Adds currRanges to a list of toProcess
+// Loops whilst there are items in toProcess list
+// for each range in toProcess
+//
+//	check if the range intersects any of the destRanges.
+//	As soon as an intersection is found stop looping and:
+//		If the currRange exists within a range entirely - use the destiation values to map to the new range
+//		If the currRange start or end exists within a range -
+//			Add the overlap of ranges to possibleRanges (mapped to destination values) AND add the remainder of the range into the toProcess list to check for further overlaps.
+//	If no intersection is found - keep the current range in possible ranges.
+func findPossibleRanges(currRanges, destRanges []RangeMap) []RangeMap {
+	var possibleRanges []RangeMap
+	toProcess := currRanges
+	for len(toProcess) > 0 {
+		// fmt.Println("To Process:", toProcess)
+		var newRangesToProcess []RangeMap
+		for _, currRange := range toProcess {
+			rangeFound := false
+			for _, destRange := range destRanges {
+				if currRange.sourceStart >= destRange.sourceStart && currRange.sourceEnd <= destRange.sourceEnd {
+					// Range fits completeley in the new range.
+					possibleRanges = append(possibleRanges, getNewRange(currRange, destRange))
+					// fmt.Println("Range fits, adding to possibleRanges:", currRange, destRange, possibleRanges)
+					rangeFound = true
+					break
+				} else if currRange.sourceStart < destRange.sourceStart && currRange.sourceEnd >= destRange.sourceStart {
+					// The end of the range is within the range.
+					newPossibleRange := RangeMap{
+						sourceStart: destRange.sourceStart,
+						sourceEnd:   currRange.sourceEnd,
+						rangeLength: currRange.sourceEnd - destRange.sourceStart,
+					}
+					possibleRanges = append(possibleRanges, getNewRange(newPossibleRange, destRange))
+					newRangeToProcess := RangeMap{
+						sourceStart: currRange.sourceStart,
+						sourceEnd:   destRange.sourceStart - 1,
+						rangeLength: currRange.sourceStart - 1 - currRange.sourceStart,
+					}
+					newRangesToProcess = append(newRangesToProcess, newRangeToProcess)
+					rangeFound = true
+					// fmt.Println("End of Range is within Range, adding to possibleRanges:", currRange, destRange, newPossibleRange, newRangeToProcess)
+					break
+				} else if currRange.sourceStart < destRange.sourceEnd && currRange.sourceEnd > destRange.sourceEnd {
+					// The start of the range is within the range.
+					// TODO: These conditions dont account for our currRange supersetting the dest range.
+					// The end of the range is within the range.
+					newPossibleRange := RangeMap{
+						sourceStart: currRange.sourceStart,
+						sourceEnd:   destRange.sourceEnd,
+						rangeLength: destRange.sourceEnd - currRange.sourceStart,
+					}
+					possibleRanges = append(possibleRanges, getNewRange(newPossibleRange, destRange))
+					newRangeToProcess := RangeMap{
+						sourceStart: destRange.sourceEnd + 1,
+						sourceEnd:   currRange.sourceEnd,
+						rangeLength: currRange.sourceEnd - destRange.sourceEnd,
+					}
+					newRangesToProcess = append(newRangesToProcess, newRangeToProcess)
+					rangeFound = true
+					// fmt.Println("Start of Range is within Range, adding to possibleRanges:", currRange, destRange, newPossibleRange, newRangeToProcess)
+					break
+				} else {
+					// Range is entirely out of the range.
+					rangeFound = false
+				}
+			}
+			if !rangeFound {
+				// fmt.Println("Range is not found:", currRange, destRanges)
+				possibleRanges = append(possibleRanges, currRange)
+			}
+		}
+		// fmt.Println("New Ranges to Process:", newRangesToProcess)
+		toProcess = newRangesToProcess
+	}
+
+	return possibleRanges
+}
+
+func getNewRange(source, dest RangeMap) RangeMap {
+	diff := dest.sourceStart - dest.destinationStart
+	// fmt.Println("NEW RANGE:", source, dest, diff)
+
+	return RangeMap{
+		sourceStart: source.sourceStart - diff,
+		sourceEnd:   source.sourceEnd - diff,
+		rangeLength: source.rangeLength,
+	}
 }

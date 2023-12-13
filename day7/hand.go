@@ -141,32 +141,22 @@ func (hand Hand) getTypeWithJoker() int {
 		}
 	}
 
-	// Could have used a map here instead and looped around number of jokers.
+	// Maps the types to the next best type with a wildcard. (Previously mapped out the conditions)
 	// E.g. TYPE -> New Type with a Joker
 	// 		FOUR_OF_A_KIND -> FIVE_OF_A_KIND
 	jCount := valCount[0]
-	if jCount == 4 {
-		highestType = FIVE_OF_A_KIND
-	} else if jCount == 3 && highestType == ONE_PAIR {
-		highestType = FIVE_OF_A_KIND
-	} else if jCount == 3 && highestType == HIGH_CARD {
-		highestType = FOUR_OF_A_KIND
-	} else if jCount == 2 && (highestType == FULL_HOUSE || highestType == THREE_OF_A_KIND) {
-		highestType = FIVE_OF_A_KIND
-	} else if jCount == 2 && (highestType == TWO_PAIR || highestType == ONE_PAIR) {
-		highestType = FOUR_OF_A_KIND
-	} else if jCount == 2 && highestType == HIGH_CARD {
-		highestType = THREE_OF_A_KIND
-	} else if jCount == 1 && highestType == FOUR_OF_A_KIND {
-		highestType = FIVE_OF_A_KIND
-	} else if jCount == 1 && (highestType == FULL_HOUSE || highestType == THREE_OF_A_KIND) {
-		highestType = FOUR_OF_A_KIND
-	} else if jCount == 1 && highestType == TWO_PAIR {
-		highestType = FULL_HOUSE
-	} else if jCount == 1 && highestType == ONE_PAIR {
-		highestType = THREE_OF_A_KIND
-	} else if jCount == 1 && highestType == HIGH_CARD {
-		highestType = ONE_PAIR
+	jokerTypeMap := map[int]int{
+		FOUR_OF_A_KIND:  FIVE_OF_A_KIND,
+		FULL_HOUSE:      FOUR_OF_A_KIND,
+		THREE_OF_A_KIND: FOUR_OF_A_KIND,
+		TWO_PAIR:        FULL_HOUSE,
+		ONE_PAIR:        THREE_OF_A_KIND,
+		HIGH_CARD:       ONE_PAIR,
+	}
+
+	for i := 0; i < jCount; i++ {
+		highestType = jokerTypeMap[highestType]
 	}
 	return highestType
+
 }

@@ -16,3 +16,6 @@
 `go build -o bin/aoc23`
 
 `bin/aoc23`
+
+### Create a New Day
+`./newday.sh 25`

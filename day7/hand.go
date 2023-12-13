@@ -85,6 +85,88 @@ func (h1 Hand) strongerThan(h2 Hand) bool {
 			}
 		}
 	}
-	// fmt.Println(h1Type, h2Type)
 	return false
+}
+
+func (hand Hand) getTypeWithJoker() int {
+	if hand.cards[0] == hand.cards[1] &&
+		hand.cards[0] == hand.cards[2] &&
+		hand.cards[0] == hand.cards[3] &&
+		hand.cards[0] == hand.cards[4] {
+		return FIVE_OF_A_KIND
+	}
+
+	// Use a map [faceCard] -> Count
+	// [2] = 2
+	// Then use the map to work out the highest type.
+	valCount := make(map[int]int)
+	valsWithPairOrBetter := make(map[int]bool)
+	for _, card := range hand.cards {
+		valCount[card] = valCount[card] + 1
+		if valCount[card] > 1 && card != 0 {
+			valsWithPairOrBetter[card] = true
+		}
+	}
+
+	highestType := HIGH_CARD
+
+	// Range over maps doesn't guarantee order
+	for val, count := range valCount {
+		// Skip wildcards as these will be accounted for after
+		if val == 0 {
+			continue
+		}
+		if count == 5 {
+			return FIVE_OF_A_KIND
+		} else if count == 4 {
+			highestType = FOUR_OF_A_KIND
+		} else if count == 3 {
+			if len(valsWithPairOrBetter) > 1 {
+				if highestType < FULL_HOUSE {
+					highestType = FULL_HOUSE
+				}
+			} else if highestType < THREE_OF_A_KIND {
+				highestType = THREE_OF_A_KIND
+			}
+			// Check for full house.
+		} else if count == 2 {
+			// Check for two pair
+			if len(valsWithPairOrBetter) > 1 {
+				if highestType < TWO_PAIR {
+					highestType = TWO_PAIR
+				}
+			} else if highestType < ONE_PAIR {
+				highestType = ONE_PAIR
+			}
+		}
+	}
+
+	// Could have used a map here instead and looped around number of jokers.
+	// E.g. TYPE -> New Type with a Joker
+	// 		FOUR_OF_A_KIND -> FIVE_OF_A_KIND
+	jCount := valCount[0]
+	if jCount == 4 {
+		highestType = FIVE_OF_A_KIND
+	} else if jCount == 3 && highestType == ONE_PAIR {
+		highestType = FIVE_OF_A_KIND
+	} else if jCount == 3 && highestType == HIGH_CARD {
+		highestType = FOUR_OF_A_KIND
+	} else if jCount == 2 && (highestType == FULL_HOUSE || highestType == THREE_OF_A_KIND) {
+		highestType = FIVE_OF_A_KIND
+	} else if jCount == 2 && (highestType == TWO_PAIR || highestType == ONE_PAIR) {
+		highestType = FOUR_OF_A_KIND
+	} else if jCount == 2 && highestType == HIGH_CARD {
+		highestType = THREE_OF_A_KIND
+	} else if jCount == 1 && highestType == FOUR_OF_A_KIND {
+		highestType = FIVE_OF_A_KIND
+	} else if jCount == 1 && (highestType == FULL_HOUSE || highestType == THREE_OF_A_KIND) {
+		highestType = FOUR_OF_A_KIND
+	} else if jCount == 1 && highestType == TWO_PAIR {
+		highestType = FULL_HOUSE
+	} else if jCount == 1 && highestType == ONE_PAIR {
+		highestType = THREE_OF_A_KIND
+	} else if jCount == 1 && highestType == HIGH_CARD {
+		highestType = ONE_PAIR
+	}
+	return highestType
 }

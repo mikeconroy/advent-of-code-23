@@ -37,6 +37,9 @@ func Run() (string, string) {
  */
 func part1(input []string) string {
 	hands := loadInput(input)
+	for i, hand := range hands {
+		hands[i].hType = hand.getType()
+	}
 	hands = sort(hands)
 
 	result := 0
@@ -47,8 +50,44 @@ func part1(input []string) string {
 	return fmt.Sprint(result)
 }
 
+var valMap = map[rune]int{
+	'A': 14,
+	'K': 13,
+	'Q': 12,
+	'J': 11,
+	'T': 10,
+	'9': 9,
+	'8': 8,
+	'7': 7,
+	'6': 6,
+	'5': 5,
+	'4': 4,
+	'3': 3,
+	'2': 2,
+	'1': 1,
+}
+
+// 249114596 is too low
+// 247514536 is too low
+// 249837714 is too low
+// 250807190 is wrong
+// 250506580
 func part2(input []string) string {
-	return fmt.Sprint(0)
+	valMap['J'] = 0
+	hands := loadInput(input)
+
+	for i, hand := range hands {
+		// The getType now needs to workout the best type by making Js lowest value & a wildcard.
+		hands[i].hType = hand.getTypeWithJoker()
+	}
+
+	hands = sort(hands)
+	result := 0
+
+	for rank, hand := range hands {
+		result += (rank + 1) * hand.bid
+	}
+	return fmt.Sprint(result)
 }
 
 func loadInput(in []string) []Hand {
@@ -57,30 +96,14 @@ func loadInput(in []string) []Hand {
 		bid, _ := strconv.Atoi(strings.Split(line, " ")[1])
 		cardsStr := strings.Split(line, " ")[0]
 		var cards []int
-		for _, cardStr := range cardsStr {
-			var val int
-			switch cardStr {
-			case 'A':
-				val = 14
-			case 'K':
-				val = 13
-			case 'Q':
-				val = 12
-			case 'J':
-				val = 11
-			case 'T':
-				val = 10
-			default:
-				val = int(cardStr - '0')
-			}
-			cards = append(cards, val)
+		for _, cardChar := range cardsStr {
+			cards = append(cards, valMap[cardChar])
 		}
 		newHand := Hand{
 			cards: cards,
 			bid:   bid,
 		}
 
-		newHand.hType = newHand.getType()
 		hands = append(hands, newHand)
 	}
 	return hands

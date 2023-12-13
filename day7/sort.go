@@ -18,25 +18,3 @@ func sort(hands []Hand) []Hand {
 	}
 	return hands
 }
-
-// Returns true if hand1 is stronger than hand2.
-func (h1 Hand) strongerThan(h2 Hand) bool {
-	h1Type := h1.hType
-	h2Type := h2.hType
-	if h1Type > h2Type {
-		return true
-	} else if h1Type < h2Type {
-		return false
-	} else {
-		// Both are equal types so compare card face values in order.
-		for i := 0; i < len(h1.cards); i++ {
-			if h1.cards[i] > h2.cards[i] {
-				return true
-			} else if h1.cards[i] < h2.cards[i] {
-				return false
-			}
-		}
-	}
-	// fmt.Println(h1Type, h2Type)
-	return false
-}

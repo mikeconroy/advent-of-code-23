@@ -26,13 +26,11 @@ func Run() (string, string) {
 func part1(input []string) string {
 
 	times, distances := loadInput(input)
-
-	result := 1
-
 	// Races can be represented by a quadratic equation:
 	// y=-x^2 + (RaceTime * x)
 	// Then find where x intercepts Y at target distance.
 	// Integers between x1 & x2 is the number of winning options.
+	result := 1
 	for i, time := range times {
 		a := float64(-1)
 		b := float64(time)
@@ -45,7 +43,24 @@ func part1(input []string) string {
 }
 
 func part2(input []string) string {
-	return fmt.Sprint(0)
+	times, distances := loadInput(input)
+	time := sliceToInt(times)
+	distance := sliceToInt(distances)
+	a := float64(-1)
+	b := float64(time)
+	c := float64(-distance)
+	low, high := solveQuadEquation(a, b, c)
+	result := countIntsBetweenRange(low, high)
+	return fmt.Sprint(result)
+}
+
+func sliceToInt(in []int) int {
+	str := ""
+	for _, i := range in {
+		str += strconv.Itoa(i)
+	}
+	result, _ := strconv.Atoi(str)
+	return result
 }
 
 func countIntsBetweenRange(low, high float64) int {

@@ -8,8 +8,8 @@ import (
 
 func TestDay6Part1(t *testing.T) {
 	input := utils.ReadFileIntoSlice("input_test")
-	if part1(input) != "0" {
-		t.Fatal("Day 6 - Part 1 output should be xxx")
+	if part1(input) != "288" {
+		t.Fatal("Day 6 - Part 1 output should be 288")
 	}
 }
 

@@ -27,14 +27,27 @@ func part1(input []string) string {
 	sequences := getSequences(input)
 	result := 0
 	for _, seq := range sequences {
-		resultSeq := analyzeSequence(seq)
+		resultSeq := analyzeSequence(seq, false)
 		result += resultSeq[len(resultSeq)-1]
 	}
 	return fmt.Sprint(result)
 }
 
+/*
+ *	10  13  16  21  30  45		5  10  13  16  21  30  45
+ *    3   3   5   9  15			  5   3   3   5   9  15
+ *      0   2   4   6		-->		-2   0   2   4   6
+ *     	  2   2   2					   2   2   2   2
+ *        	0   0        				 0   0   0
+ */
 func part2(input []string) string {
-	return fmt.Sprint(0)
+	sequences := getSequences(input)
+	result := 0
+	for _, seq := range sequences {
+		resultSeq := analyzeSequence(seq, true)
+		result += resultSeq[0]
+	}
+	return fmt.Sprint(result)
 }
 
 // Takes a sequence
@@ -44,8 +57,7 @@ func part2(input []string) string {
 //	If not Pass the new Sequence to analyzeSequence and hold the response.
 //	Take the last digit of the response and add it to the last digit of the new sequence calculated.
 //	Return the newSequence with the new digit on the end.
-func analyzeSequence(seq []int) []int {
-	fmt.Println("Analyzing:", seq)
+func analyzeSequence(seq []int, backwards bool) []int {
 	var newSeq []int
 
 	prevVal := seq[0]
@@ -59,14 +71,24 @@ func analyzeSequence(seq []int) []int {
 		}
 	}
 
-	if allZero {
-		return append(seq, prevVal)
+	if !backwards {
+		if allZero {
+			return append(seq, prevVal)
+		} else {
+			analyzedSeq := analyzeSequence(newSeq, backwards)
+			addedVal := prevVal + analyzedSeq[len(analyzedSeq)-1]
+			newSeq = append(seq, addedVal)
+			return newSeq
+		}
 	} else {
-		analyzedSeq := analyzeSequence(newSeq)
-		addedVal := prevVal + analyzedSeq[len(analyzedSeq)-1]
-		fmt.Println(seq, addedVal, analyzedSeq)
-		newSeq = append(seq, addedVal)
-		return newSeq
+		if allZero {
+			return append([]int{seq[0]}, seq...)
+		} else {
+			analyzedSeq := analyzeSequence(newSeq, backwards)
+			addedVal := seq[0] - analyzedSeq[0]
+			newSeq = append([]int{addedVal}, seq...)
+			return newSeq
+		}
 	}
 }
 

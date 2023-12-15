@@ -53,4 +53,12 @@ func TestDay9AnalyzeSequence(t *testing.T) {
 			t.Fatal("Day 9 - Analyze Sequence Output is wrong. Expected:", expected, "Actual:", actual)
 		}
 	}
+
+	actual = analyzeSequence([]int{45, 30, 21, 16, 13, 10}, false)
+	expected = []int{45, 30, 21, 16, 13, 10, 5}
+	for i := 0; i < len(actual); i++ {
+		if actual[i] != expected[i] {
+			t.Fatal("Day 9 - Analyze Sequence Output is wrong. Expected:", expected, "Actual:", actual)
+		}
+	}
 }

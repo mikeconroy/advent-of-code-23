@@ -44,6 +44,9 @@ func part2(input []string) string {
 	sequences := getSequences(input)
 	result := 0
 	for _, seq := range sequences {
+
+		// Instead of implementing the backwards flag.
+		// Could have reversed the sequence which also provides the same result.
 		resultSeq := analyzeSequence(seq, true)
 		result += resultSeq[0]
 	}

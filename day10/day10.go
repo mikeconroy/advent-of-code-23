@@ -33,6 +33,68 @@ func part1(input []string) string {
 }
 
 func part2(input []string) string {
+	// Same setup as Part 1 to first find the loop.
+	area, start := parseInput(input)
+	pipe, direction := findFirstConnectingPipe(area, start)
+	loop := map[Position]bool{pipe: true}
+	for pipe.val != 'S' {
+		pipe, direction = findNextPipe(area, pipe, direction)
+		loop[pipe] = true
+	}
+
+	// FOR DEBUGGING PURPOSES
+	fmt.Println()
+	for y := range area {
+		for x, val := range area[y] {
+			pipe := Position{x: x, y: y, val: val}
+			if loop[pipe] {
+				fmt.Print(string(val))
+				// fmt.Print("#")
+			} else {
+				fmt.Print(".")
+			}
+		}
+		fmt.Println()
+	}
+	fmt.Println()
+
+	/* Need to leak down in between pipes...
+	 * No leak:		Leak:
+	 * 	 F7			 7F
+	 *   ||			 ||
+	 * Flood fill the 'gaps' between pipes to find which nodes are connected to the outside.
+	 * Detect gaps by recognising pipe shapes that create them.
+	 * 	7F	7L	JF	JL	||	=
+	 * Each step check surroundings for a node not part of the pipe - if found it's part of results.
+	 *
+	 * May be easier to double the number of rows & columns.
+	 * Filling the gaps with '.' and connecting pipes with - & |.
+	 * 	So Connections like:
+	 * 		--		F-		L-		-J		-7		F7		LJ		FJ		7		F		|		|		|
+	 * 					  													|		|		|		J		L
+	 *  Become:
+	 * 		---		F-7		l--		--J		--7		F-7		L-J		F-J		7		F		|		|		|
+	 * 																		|		|		|		|		|
+	 * 																		|		|		|		J		L
+	 *
+	 *	..........				....................
+	 *	.S------7.				....................
+	 *	.|F----7|.				..S--------------7..
+	 *	.||....||.				..|..............|..
+	 *	.||....||.		---->	..|.F----------7.|..
+	 *	.|L-7F-J|.				..|.|..........|.|..
+	 *	.|..||..|.				..|.|..........|.|..
+	 *	.L--JL--J.				..|.|..........|.|..
+	 *	..........				..|.|..........|.|..
+	 *							..|.|..........|.|..
+	 * 							..|.L---7.F---J|.|..
+	 *							..|.....|.|....|.|..
+	 *							..|.....|.|....|.|..
+	 *							..|.....|.|....|.|..
+	 *							..L-----J.|----J.|..
+	 *							....................
+	 *							....................
+	 */
 	return fmt.Sprint(0)
 }
 

@@ -51,6 +51,7 @@ func part2(input []string) string {
 	 *
 	 * We need to identify the loops each path takes and then find the LCM between the loops (steps it takes to get to Z).
 	 * A loop is recognised when a path reaches back to the start and the current direction is the same.
+	 * 		It's dumb luck that cycle start position = cycle length = cycle distance from start position
 	 */
 
 	var loopLengths []int

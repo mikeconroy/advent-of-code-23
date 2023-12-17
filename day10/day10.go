@@ -32,6 +32,7 @@ func part1(input []string) string {
 	return fmt.Sprint(steps / 2)
 }
 
+// This code could definitely be cleaner...
 func part2(input []string) string {
 	// Same setup as Part 1 to first find the loop.
 	area, start := parseInput(input)
@@ -42,21 +43,23 @@ func part2(input []string) string {
 		loop[pipe] = true
 	}
 
-	// FOR DEBUGGING PURPOSES
-	fmt.Println()
-	for y := range area {
-		for x, val := range area[y] {
-			pipe := Position{x: x, y: y, val: val}
+	pipesArea := area
+	for y, row := range area {
+		for x, val := range row {
+			pipe := Position{
+				x:   x,
+				y:   y,
+				val: val,
+			}
 			if loop[pipe] {
-				fmt.Print(string(val))
-				// fmt.Print("#")
+				pipesArea[y][x] = val
 			} else {
-				fmt.Print(".")
+				pipesArea[y][x] = '.'
 			}
 		}
-		fmt.Println()
 	}
-	fmt.Println()
+
+	pipesArea[start.y][start.x] = getStartPipeType(pipesArea, start)
 
 	/* Need to leak down in between pipes...
 	 * No leak:		Leak:
@@ -94,8 +97,132 @@ func part2(input []string) string {
 	 *							..L-----J.|----J.|..
 	 *							....................
 	 *							....................
+	 * We can then flood fill tiles connected to borders with 0s.
+	 * And finally workout which tiles are enclosed by finding only checking original tiles.
+	 * (Every even Row & Even Column can be ignored as they are the expanded values).
+	 * Count the remaining .s.
 	 */
-	return fmt.Sprint(0)
+	expandedArea := expandArea(pipesArea)
+	enclosedNodesArea := markUnenclosedNodes(expandedArea)
+	count := 0
+	for y := 0; y < len(enclosedNodesArea); y += 2 {
+		for x := 0; x < len(enclosedNodesArea[y]); x += 2 {
+			if enclosedNodesArea[y][x] == '.' {
+				count++
+			}
+		}
+	}
+	return fmt.Sprint(count)
+}
+func markUnenclosedNodes(area [][]rune) [][]rune {
+	var toProcess []Position
+	for x, val := range area[0] {
+		tile := Position{
+			x:   x,
+			y:   0,
+			val: val,
+		}
+		toProcess = append(toProcess, tile)
+		y := len(area) - 1
+		tile = Position{
+			x:   x,
+			y:   y,
+			val: area[y][x],
+		}
+		toProcess = append(toProcess, tile)
+	}
+
+	for y, _ := range area {
+		tile := Position{
+			y:   y,
+			x:   0,
+			val: area[y][0],
+		}
+		toProcess = append(toProcess, tile)
+		x := len(area[y]) - 1
+		tile = Position{
+			y:   y,
+			x:   x,
+			val: area[y][x],
+		}
+		toProcess = append(toProcess, tile)
+	}
+	for len(toProcess) > 0 {
+		pos := Position{
+			x:   toProcess[0].x,
+			y:   toProcess[0].y,
+			val: area[toProcess[0].y][toProcess[0].x],
+		}
+		toProcess = append(toProcess[:0], toProcess[1:]...)
+		if pos.val == '.' {
+			area[pos.y][pos.x] = '0'
+			if pos.x < len(area[pos.y])-2 {
+				right := Position{x: pos.x + 1, y: pos.y}
+				if area[right.y][right.x] == '.' {
+					toProcess = append(toProcess, right)
+				}
+			}
+			if pos.x > 0 {
+				left := Position{x: pos.x - 1, y: pos.y}
+				if area[left.y][left.x] == '.' {
+					toProcess = append(toProcess, left)
+				}
+			}
+			if pos.y > 0 {
+				above := Position{x: pos.x, y: pos.y - 1}
+				if area[above.y][above.x] == '.' {
+					toProcess = append(toProcess, above)
+				}
+			}
+			if pos.y < len(area)-2 {
+				below := Position{x: pos.x, y: pos.y + 1}
+				if area[below.y][below.x] == '.' {
+					toProcess = append(toProcess, below)
+				}
+			}
+		}
+	}
+
+	return area
+}
+
+func expandArea(area [][]rune) [][]rune {
+	var expandedArea [][]rune
+	for y, row := range area {
+		expandedRow := make([]rune, len(area[y])*2)
+		insertedRow := make([]rune, len(area[y])*2)
+		for x, val := range row {
+			newX := x * 2
+			// newY := y * 2
+			expandedRow[newX] = val
+			if val == '-' || val == 'F' || val == 'L' {
+				expandedRow[newX+1] = '-'
+			} else {
+				expandedRow[newX+1] = '.'
+			}
+
+			if val == '|' || val == 'F' || val == '7' {
+				insertedRow[newX] = '|'
+			} else {
+				insertedRow[newX] = '.'
+			}
+			insertedRow[newX+1] = '.'
+		}
+		expandedArea = append(expandedArea, expandedRow)
+		expandedArea = append(expandedArea, insertedRow)
+	}
+	return expandedArea
+}
+
+func printArea(area [][]rune) {
+	// FOR DEBUGGING PURPOSES
+	fmt.Println()
+	for y := range area {
+		for _, val := range area[y] {
+			fmt.Print(string(val))
+		}
+		fmt.Println()
+	}
 }
 
 type Position struct {
@@ -212,4 +339,65 @@ func getDirection(d int) string {
 		return "LEFT"
 	}
 	return "?"
+}
+
+func getStartPipeType(area [][]rune, start Position) rune {
+	rightConnectors := map[rune]bool{
+		'-': true,
+		'J': true,
+		'7': true,
+	}
+	leftConnectors := map[rune]bool{
+		'-': true,
+		'F': true,
+		'L': true,
+	}
+	aboveConnectors := map[rune]bool{
+		'|': true,
+		'F': true,
+		'7': true,
+	}
+	belowConnectors := map[rune]bool{
+		'|': true,
+		'J': true,
+		'L': true,
+	}
+
+	var right bool
+	var left bool
+	var above bool
+	var below bool
+	if start.x < len(area[start.y])-1 {
+		right = rightConnectors[area[start.y][start.x+1]]
+	}
+	if start.x > 0 {
+		left = leftConnectors[area[start.y][start.x-1]]
+	}
+	if start.y > 0 {
+		above = aboveConnectors[area[start.y-1][start.x]]
+	}
+	if start.y < len(area)-1 {
+		below = belowConnectors[area[start.y+1][start.x]]
+	}
+
+	if right {
+		if left {
+			return '-'
+		} else if above {
+			return 'L'
+		} else if below {
+			return 'F'
+		}
+	} else if left {
+		if above {
+			return 'J'
+		} else if below {
+			return '7'
+		}
+	} else if above {
+		if below {
+			return '|'
+		}
+	}
+	return '?'
 }

@@ -114,6 +114,7 @@ func part2(input []string) string {
 	}
 	return fmt.Sprint(count)
 }
+
 func markUnenclosedNodes(area [][]rune) [][]rune {
 	var toProcess []Position
 	for x, val := range area[0] {
@@ -132,7 +133,7 @@ func markUnenclosedNodes(area [][]rune) [][]rune {
 		toProcess = append(toProcess, tile)
 	}
 
-	for y, _ := range area {
+	for y := range area {
 		tile := Position{
 			y:   y,
 			x:   0,

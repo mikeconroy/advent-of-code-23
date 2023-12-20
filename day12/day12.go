@@ -39,6 +39,7 @@ func part1(input []string) string {
 	return fmt.Sprint(arrangementsCount)
 }
 
+// Algorithm used for Part 1 will be too slow for Part 2...
 func part2(input []string) string {
 	return fmt.Sprint(0)
 }
@@ -104,21 +105,24 @@ func isValidArrangement(field Field) bool {
 			inGroupOfDamagedSprings = true
 		} else {
 			if inGroupOfDamagedSprings {
+				if field.damagedGroups[currentGroupIndex] != arrangement[currentGroupIndex] {
+					return false
+				}
 				currentGroupIndex++
 			}
 			inGroupOfDamagedSprings = false
 		}
 	}
 
-	// fmt.Println("COMPARING ARRANGEMENT WITH EXPECTED", arrangement, field.damagedGroups)
-
-	if slicesAreEqual(arrangement, field.damagedGroups) {
-		// fmt.Println("SLICES ARE EQUAL, RETURNING TRUE")
-		return true
-	} else {
+	if len(arrangement) != len(field.damagedGroups) {
 		return false
+	} else {
+		// Check the last value of the groupings are equal
+		if arrangement[len(arrangement)-1] != field.damagedGroups[len(field.damagedGroups)-1] {
+			return false
+		}
 	}
-
+	return true
 }
 
 func printCombinations(combos [][]rune) {

@@ -21,62 +21,63 @@ type Field struct {
 
 func part1(input []string) string {
 	fields := createFields(input)
-	// For each field:
-	// 		Create combinations of operational & non-operational springs for all the unknowns.
-	// 		Check whether the replacement unknowns match the groupings or not
-	// This is probably quite a naive approach as we are creating groupings that cannot exists.
-	// May be a better algorithm using recursion to only create possible values for the unknowns.
 	arrangementsCount := 0
 	for _, field := range fields {
-		combos := generateCombinations(field.unknowns)
-		for _, combo := range combos {
-			newField := replaceUnknownSprings(field, combo)
-			if isValidArrangement(newField) {
-				arrangementsCount++
-			}
-		}
+		arrangementsCount += countValidArrangements(field, 0)
 	}
 	return fmt.Sprint(arrangementsCount)
 }
 
-// Algorithm used for Part 1 will be too slow for Part 2...
 func part2(input []string) string {
 	return fmt.Sprint(0)
 }
 
-var combosCache = map[int][][]rune{
-	1: {[]rune{'.'}, []rune{'#'}},
-}
+func countValidArrangements(field Field, springIndex int) int {
+	// TODO: Optimization to check validity as we go to reduce checking every possibility.
+	// E.g. in some cases a # at the start will be invalid in which case there is no point verifying every
+	// Combination after that.
+	// We can also stop recursing once all unknowns are populated.
 
-// Seems suitable for up to a count of 20.
-func generateCombinations(count int) [][]rune {
-	var combos [][]rune
-	if cachedCombos, ok := combosCache[count]; ok {
-		return cachedCombos
-	} else {
-		for _, generatedCombo := range generateCombinations(count - 1) {
-			newComboDot := append([]rune{'.'}, generatedCombo...)
-			combos = append(combos, newComboDot)
-			newComboHash := append([]rune{'#'}, generatedCombo...)
-			combos = append(combos, newComboHash)
-		}
-	}
-	combosCache[count] = combos
-	return combos
-}
-
-func replaceUnknownSprings(field Field, unknownsReplacement []rune) Field {
-	var newSprings []rune
-	currentUnknown := 0
-	for _, spring := range field.springs {
-		if spring == '?' {
-			newSprings = append(newSprings, unknownsReplacement[currentUnknown])
-			currentUnknown++
+	// fmt.Println("Count Valid Arrangements:", getSpringsAsString(field.springs), springIndex)
+	count := 0
+	if springIndex >= len(field.springs) || field.unknowns == 0 {
+		if isValidArrangement(field) {
+			// fmt.Println("Valid Arrangement.")
+			return 1
 		} else {
-			newSprings = append(newSprings, spring)
+			// fmt.Println("Invalid Arrangement.")
+			return 0
 		}
 	}
-	return Field{springs: newSprings, damagedGroups: field.damagedGroups, unknowns: 0}
+	if field.springs[springIndex] == '?' {
+		// Create a new field with the Unknown replaced with a .
+		springsDot := make([]rune, len(field.springs))
+		copy(springsDot, field.springs)
+		springsDot[springIndex] = '.'
+		fieldDot := Field{springs: springsDot, damagedGroups: field.damagedGroups, unknowns: field.unknowns - 1}
+
+		// Create a new field with the Unknown replaced with a #
+		springsHash := make([]rune, len(field.springs))
+		copy(springsHash, field.springs)
+		springsHash[springIndex] = '#'
+		fieldHash := Field{springs: springsHash, damagedGroups: field.damagedGroups, unknowns: field.unknowns - 1}
+		springIndex++
+		// fmt.Println("springsDot", getSpringsAsString(springsDot), "springsHash", getSpringsAsString(springsHash))
+		count += countValidArrangements(fieldDot, springIndex)
+		count += countValidArrangements(fieldHash, springIndex)
+	} else {
+		// TODO: It may be more efficient here to find the next unknown and calling the function with that index.
+		count += countValidArrangements(field, springIndex+1)
+	}
+	return count
+}
+
+func getSpringsAsString(springs []rune) string {
+	result := ""
+	for _, spring := range springs {
+		result += string(spring)
+	}
+	return result
 }
 
 func slicesAreEqual(a []int, b []int) bool {

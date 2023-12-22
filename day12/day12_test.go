@@ -53,7 +53,8 @@ func TestCountValidArrangements(t *testing.T) {
 
 func TestDay12Part2(t *testing.T) {
 	input := utils.ReadFileIntoSlice("input_test")
-	if part2(input) != "525152" {
-		t.Fatal("Day 12 - Part 2 output should be 525152")
+	actual := part2(input)
+	if actual != "525152" {
+		t.Fatal("Day 12 - Part 2 output should be 525152. Instead got:", actual)
 	}
 }

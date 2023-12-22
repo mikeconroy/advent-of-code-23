@@ -30,7 +30,6 @@ func part1(input []string) string {
 
 func part2(input []string) string {
 	fields := createFields(input)
-	return "0"
 	arrangementsCount := 0
 	for _, field := range fields {
 		ogSprings := make([]rune, len(field.springs))
@@ -43,18 +42,94 @@ func part2(input []string) string {
 			field.damagedGroups = append(field.damagedGroups, ogDamagedGroups...)
 		}
 		field.unknowns = (field.unknowns * 5) + 4
-		fmt.Println("Field:", field, getSpringsAsString(field.springs))
-		arrangementsCount += countValidArrangements(field, 0)
+		// fmt.Println("Field:", field, getSpringsAsString(field.springs))
+		arrangementsCount += countDp(field.springs, field.damagedGroups)
 	}
 	return fmt.Sprint(arrangementsCount)
 }
 
-func countValidArrangements(field Field, springIndex int) int {
-	// TODO: Optimization to check validity as we go to reduce checking every possibility.
-	// E.g. in some cases a # at the start will be invalid in which case there is no point verifying every
-	// Combination after that.
-	// We can also stop recursing once all unknowns are populated.
+/*
+ * Based on:
+ *	https://www.youtube.com/watch?v=g3Ms5e7Jdqo
+ *	https://www.reddit.com/r/adventofcode/comments/18hbbxe/2023_day_12python_stepbystep_tutorial_with_bonus/
+ */
+var cache = make(map[string]int)
 
+func countDp(springs []rune, groups []int) int {
+	key := makeKey(springs, groups)
+	if cacheResult, ok := cache[key]; ok {
+		return cacheResult
+	}
+	count := 0
+	// Check if we still have springs left to check.
+	if len(springs) == 0 {
+		// If we don't have any springs left then check we also don't have any groups left.
+		// If we don't have groups left then this is valid so return 1.
+		// If we have groups left then this is invalid so return 0.
+		if len(groups) == 0 {
+			return 1
+		} else {
+			return 0
+		}
+	}
+
+	// If we have 0 groups left but still have a # in our springs then return 0 as this is invalid.
+	// If we have no more springs then return 1 (all question marks will be .) which is a single arrangement.
+	if len(groups) == 0 {
+		if sliceContains(springs, '#') {
+			return 0
+		} else {
+			return 1
+		}
+	}
+
+	// If the first spring is . or ? then continue with the next spring.
+	// This treats the ? as a .
+	if springs[0] == '.' || springs[0] == '?' {
+		count += countDp(springs[1:], groups)
+	}
+
+	// Handle the case where the spring is a # - treating the ? as a #.
+	// This combined with the above if statement allows us to handle the ? as both types.
+	if springs[0] == '#' || springs[0] == '?' {
+		// Possibilities:
+		// 		This group matches the expected group - in which case continue
+		// 		This group matches but has an extra # on the end - invalid
+		// 		This group does not match - not enough # or not enough length
+		if groups[0] <= len(springs) {
+			if !sliceContains(springs[:groups[0]], '.') {
+				if groups[0] == len(springs) || springs[groups[0]] != '#' {
+					if len(springs) == groups[0] {
+						if len(groups) == 1 {
+							return 1
+						}
+					} else {
+						count += countDp(springs[groups[0]+1:], groups[1:])
+					}
+				}
+			}
+		}
+	}
+	cache[key] = count
+	return count
+}
+
+func makeKey(springs []rune, groups []int) string {
+	return fmt.Sprintf("%v_%v", springs, groups)
+}
+
+func sliceContains(slice []rune, search rune) bool {
+	for _, val := range slice {
+		if val == search {
+			return true
+		}
+	}
+	return false
+}
+
+// This structure for the recursion doesn't allow us to memoise (cache) results to speed up part 2.
+// Kept in the code and used by Part 1 for posterity.
+func countValidArrangements(field Field, springIndex int) int {
 	// fmt.Println("Count Valid Arrangements:", getSpringsAsString(field.springs), springIndex)
 	count := 0
 	if springIndex >= len(field.springs) || field.unknowns == 0 {
@@ -140,19 +215,6 @@ func getSpringsAsString(springs []rune) string {
 	return result
 }
 
-// Unused - slices are compared inline of checking validity
-func slicesAreEqual(a []int, b []int) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for index := 0; index < len(a); index++ {
-		if a[index] != b[index] {
-			return false
-		}
-	}
-	return true
-}
-
 func isValidArrangement(field Field) bool {
 	arrangement := make([]int, len(field.damagedGroups))
 	currentGroupIndex := 0
@@ -185,15 +247,6 @@ func isValidArrangement(field Field) bool {
 		}
 	}
 	return true
-}
-
-func printCombinations(combos [][]rune) {
-	for _, line := range combos {
-		for _, val := range line {
-			fmt.Print(string(val))
-		}
-		fmt.Println()
-	}
 }
 
 func createFields(in []string) (fields []Field) {

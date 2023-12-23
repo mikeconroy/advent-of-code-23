@@ -2,6 +2,7 @@ package day14
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/mikeconroy/advent-of-code-23/utils"
 )
@@ -20,6 +21,8 @@ func part1(input []string) string {
 // 1 Cycle = Roll North, West, South, East
 // We can't iterate 1 Billion times so instead we find the a loop
 // and skip iterating the loop.
+const totalCycles = 1_000_000_000
+
 func part2(input []string) string {
 
 	plat := loadPlatform(input)
@@ -27,7 +30,7 @@ func part2(input []string) string {
 	// Holds the first iteration the value was found at.
 	cycles := make(map[string]int)
 	cycleFound := false
-	for x := 1; x <= 1_000_000_000; x++ {
+	for x := 1; x <= totalCycles; x++ {
 		plat.TiltNorth()
 		plat.TiltWest()
 		plat.TiltSouth()
@@ -37,8 +40,8 @@ func part2(input []string) string {
 			key := plat.Key()
 			if iter, ok := cycles[key]; ok {
 				cycleLen := x - iter
-				remainingCycles := (1_000_000_000 - x) % cycleLen
-				x = 1_000_000_000 - remainingCycles
+				remainingCycles := (totalCycles - x) % cycleLen
+				x = totalCycles - remainingCycles
 				cycleFound = true
 			} else {
 				cycles[key] = x
@@ -51,13 +54,13 @@ func part2(input []string) string {
 type Platform [][]rune
 
 func (p Platform) Key() string {
-	var key string
+	var keyBuilder strings.Builder
 	for _, row := range p {
 		for _, val := range row {
-			key += string(val)
+			keyBuilder.WriteRune(val)
 		}
 	}
-	return key
+	return keyBuilder.String()
 }
 
 func (p Platform) TiltNorth() {

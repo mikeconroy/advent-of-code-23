@@ -2,7 +2,6 @@ package day13
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/mikeconroy/advent-of-code-23/utils"
 )
@@ -23,45 +22,60 @@ func part1(input []string) string {
 	ters := loadTerrain(input)
 	var result int
 	for _, ter := range ters {
-		result += ter.FindHorizontalReflection() * 100
-		result += ter.FindVerticalReflection()
+		result += ter.FindHorizontalReflection(0) * 100
+		result += ter.FindVerticalReflection(0)
 	}
 	return fmt.Sprint(result)
 }
 
 func part2(input []string) string {
-	return fmt.Sprint(0)
+	ters := loadTerrain(input)
+	var result int
+	for _, ter := range ters {
+		result += ter.FindHorizontalReflection(1) * 100
+		result += ter.FindVerticalReflection(1)
+	}
+	return fmt.Sprint(result)
 }
 
 type Terrain [][]rune
 
 // Finds if a horizontal line reflection exists and returns the number of rows above the reflection.
 // Or 0 if no reflection is found.
-func (t Terrain) FindHorizontalReflection() int {
+func (t Terrain) FindHorizontalReflection(expectedVariance int) int {
 	// Reflection Point is the horizontal line we are checking.
 	// 1 means we check the first 2 lines for reflection.
 	// Then move the reflectionPoint to 2 and check lines 2 & 3 + 1 & 4 (if 2&3 match)
 	for reflectionPoint := 1; reflectionPoint < len(t); reflectionPoint++ {
-		rowsMatch := true
+		variance := 0
 		for offset := 0; offset+reflectionPoint < len(t) && reflectionPoint-offset-1 >= 0; offset++ {
 			rowA := t[offset+reflectionPoint]
 			rowB := t[reflectionPoint-offset-1]
-
-			if !reflect.DeepEqual(rowA, rowB) {
-				rowsMatch = false
+			variance += countDifferences(rowA, rowB)
+			if variance > expectedVariance {
 				break
 			}
 		}
-		if rowsMatch {
+		if variance == expectedVariance {
 			return reflectionPoint
 		}
 	}
 	return 0
 }
 
+func countDifferences(a []rune, b []rune) int {
+	count := 0
+	for i := 0; i < len(a); i++ {
+		if a[i] != b[i] {
+			count++
+		}
+	}
+	return count
+}
+
 // Finds if a vertial line reflection exists and returns the number of columns to the left of the reflection.
 // Or 0 if no reflection is found.
-func (t Terrain) FindVerticalReflection() int {
+func (t Terrain) FindVerticalReflection(expectedVariance int) int {
 	// Transposing the terrain and finding the horizontal reflection is the same result.
 	var transposedT Terrain
 	for x := 0; x < len(t[0]); x++ {
@@ -71,7 +85,7 @@ func (t Terrain) FindVerticalReflection() int {
 		}
 		transposedT = append(transposedT, newRow)
 	}
-	return transposedT.FindHorizontalReflection()
+	return transposedT.FindHorizontalReflection(expectedVariance)
 }
 
 func (t Terrain) Print() {

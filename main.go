@@ -16,6 +16,7 @@ import (
 	"github.com/mikeconroy/advent-of-code-23/day10"
 	"github.com/mikeconroy/advent-of-code-23/day11"
 	"github.com/mikeconroy/advent-of-code-23/day12"
+	"github.com/mikeconroy/advent-of-code-23/day13"
 )
 
 func main() {
@@ -35,6 +36,7 @@ func main() {
 		day10.Run,
 		day11.Run,
 		day12.Run,
+		day13.Run,
 	}
 
 	if *dayToRun == 0 {

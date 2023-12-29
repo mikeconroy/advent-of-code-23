@@ -26,12 +26,87 @@ func Run() (string, string) {
  */
 func part1(input []string) string {
 	tiles := loadTiles(input)
+	sBeam := Beam{
+		pos: Point{x: 0, y: 0},
+		dir: RIGHT,
+	}
+	return fmt.Sprint(processBeam(sBeam, tiles))
+}
+
+func (b *Beam) move() {
+	if b.dir == UP {
+		b.pos.y -= 1
+	} else if b.dir == DOWN {
+		b.pos.y += 1
+	} else if b.dir == RIGHT {
+		b.pos.x += 1
+	} else if b.dir == LEFT {
+		b.pos.x -= 1
+	}
+}
+
+func part2(input []string) string {
+	tiles := loadTiles(input)
+	mostEnergy := 0
+	for x := 0; x < len(tiles[0]); x++ {
+		beam := Beam{
+			dir: DOWN,
+			pos: Point{
+				x: x,
+				y: 0,
+			},
+		}
+		energy := processBeam(beam, tiles)
+		if energy > mostEnergy {
+			mostEnergy = energy
+		}
+
+		beam = Beam{
+			dir: UP,
+			pos: Point{
+				x: x,
+				y: len(tiles) - 1,
+			},
+		}
+		energy = processBeam(beam, tiles)
+		if energy > mostEnergy {
+			mostEnergy = energy
+		}
+	}
+
+	for y := 0; y < len(tiles); y++ {
+		beam := Beam{
+			dir: RIGHT,
+			pos: Point{
+				x: 0,
+				y: y,
+			},
+		}
+		energy := processBeam(beam, tiles)
+		if energy > mostEnergy {
+			mostEnergy = energy
+		}
+
+		beam = Beam{
+			dir: LEFT,
+			pos: Point{
+				x: len(tiles[y]) - 1,
+				y: y,
+			},
+		}
+		energy = processBeam(beam, tiles)
+		if energy > mostEnergy {
+			mostEnergy = energy
+		}
+
+	}
+	return fmt.Sprint(mostEnergy)
+}
+
+func processBeam(startBeam Beam, tiles [][]rune) int {
 	energizedTiles := make(map[Point]int)
 	beams := []Beam{
-		{
-			pos: Point{x: 0, y: 0},
-			dir: RIGHT,
-		},
+		startBeam,
 	}
 
 	// Cache of beams already processed to stop when a loop is found.
@@ -118,24 +193,7 @@ func part1(input []string) string {
 
 		beams = beams[1:]
 	}
-
-	return fmt.Sprint(len(energizedTiles))
-}
-
-func (b *Beam) move() {
-	if b.dir == UP {
-		b.pos.y -= 1
-	} else if b.dir == DOWN {
-		b.pos.y += 1
-	} else if b.dir == RIGHT {
-		b.pos.x += 1
-	} else if b.dir == LEFT {
-		b.pos.x -= 1
-	}
-}
-
-func part2(input []string) string {
-	return fmt.Sprint(0)
+	return len(energizedTiles)
 }
 
 type Point struct {

@@ -15,7 +15,12 @@ func TestDay17Part1(t *testing.T) {
 
 func TestDay17Part2(t *testing.T) {
 	input := utils.ReadFileIntoSlice("input_test")
-	if part2(input) != "0" {
-		t.Fatal("Day 17 - Part 2 output should be xxx")
+	if part2(input) != "94" {
+		t.Fatal("Day 17 - Part 2 output should be 94")
+	}
+
+	input = utils.ReadFileIntoSlice("input_test_2")
+	if part2(input) != "71" {
+		t.Fatal("Day 17 - Part 2 Test 2 should be 71")
 	}
 }

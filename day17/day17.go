@@ -23,7 +23,9 @@ func part1(input []string) string {
 	city := loadBlocks(input)
 	start := Point{x: 0, y: 0}
 	end := Point{x: len(city[len(city)-1]) - 1, y: len(city) - 1}
-	return fmt.Sprint(minHeatLoss(city, start, end))
+	minDir := 0
+	maxDir := 3
+	return fmt.Sprint(minHeatLoss(city, start, end, minDir, maxDir))
 }
 
 type Point struct {
@@ -34,7 +36,7 @@ type Point struct {
 // Based on:
 //
 //	https://www.youtube.com/watch?v=2pDSooPLLkI
-func minHeatLoss(grid [][]int, start Point, end Point) int {
+func minHeatLoss(grid [][]int, start Point, end Point, minDir int, maxDir int) int {
 	seen := make(map[string]bool)
 	startBlock := &CityBlock{
 		pos: start,
@@ -50,7 +52,7 @@ func minHeatLoss(grid [][]int, start Point, end Point) int {
 
 	for pq.Len() > 0 {
 		currBlock := heap.Pop(&pq).(*CityBlock)
-		if currBlock.pos == end {
+		if currBlock.pos == end && currBlock.n >= minDir {
 			return currBlock.hl
 		}
 
@@ -60,8 +62,8 @@ func minHeatLoss(grid [][]int, start Point, end Point) int {
 
 		seen[currBlock.key()] = true
 
-		// Continue moving in the same diretion if less than 3 and not stationary.
-		if currBlock.n < 3 && !(currBlock.dX != 0 && currBlock.dY != 0) {
+		// Continue moving in the same diretion if less than 3 and not stationary (start).
+		if currBlock.n < maxDir && !(currBlock.dX != 0 && currBlock.dY != 0) {
 			newY := currBlock.pos.y + currBlock.dY
 			newX := currBlock.pos.x + currBlock.dX
 			if newY >= 0 && newY < len(grid) && newX >= 0 && newX < len(grid[newY]) {
@@ -77,27 +79,29 @@ func minHeatLoss(grid [][]int, start Point, end Point) int {
 		}
 
 		// Add valid neighbours to PQ
-		for _, neighbour := range [][]int{{0, 1}, {1, 0}, {0, -1}, {-1, 0}} {
-			// Make sure we don't handle the same direction again
-			if neighbour[0] == currBlock.dY && neighbour[1] == currBlock.dX {
-				continue
-			}
-			// Make sure we don't handle the reverse direction
-			if neighbour[0] == -(currBlock.dY) && neighbour[1] == -(currBlock.dX) {
-				continue
-			}
-
-			newY := currBlock.pos.y + neighbour[0]
-			newX := currBlock.pos.x + neighbour[1]
-			if newY >= 0 && newY < len(grid) && newX >= 0 && newX < len(grid[newY]) {
-				neighbourBlock := &CityBlock{
-					pos: Point{x: newX, y: newY},
-					hl:  currBlock.hl + grid[newY][newX],
-					dY:  neighbour[0],
-					dX:  neighbour[1],
-					n:   1,
+		if currBlock.n >= minDir || currBlock.pos == start {
+			for _, neighbour := range [][]int{{0, 1}, {1, 0}, {0, -1}, {-1, 0}} {
+				// Make sure we don't handle the same direction again
+				if neighbour[0] == currBlock.dY && neighbour[1] == currBlock.dX {
+					continue
 				}
-				heap.Push(&pq, neighbourBlock)
+				// Make sure we don't handle the reverse direction
+				if neighbour[0] == -(currBlock.dY) && neighbour[1] == -(currBlock.dX) {
+					continue
+				}
+
+				newY := currBlock.pos.y + neighbour[0]
+				newX := currBlock.pos.x + neighbour[1]
+				if newY >= 0 && newY < len(grid) && newX >= 0 && newX < len(grid[newY]) {
+					neighbourBlock := &CityBlock{
+						pos: Point{x: newX, y: newY},
+						hl:  currBlock.hl + grid[newY][newX],
+						dY:  neighbour[0],
+						dX:  neighbour[1],
+						n:   1,
+					}
+					heap.Push(&pq, neighbourBlock)
+				}
 			}
 		}
 
@@ -110,7 +114,12 @@ func (cb *CityBlock) key() string {
 }
 
 func part2(input []string) string {
-	return fmt.Sprint(0)
+	city := loadBlocks(input)
+	start := Point{x: 0, y: 0}
+	end := Point{x: len(city[len(city)-1]) - 1, y: len(city) - 1}
+	minDir := 4
+	maxDir := 10
+	return fmt.Sprint(minHeatLoss(city, start, end, minDir, maxDir))
 }
 
 func loadBlocks(in []string) (blocks [][]int) {

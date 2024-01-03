@@ -30,13 +30,17 @@ func part2(input []string) string {
 }
 
 // Uses Pick's Theorem to calculate the total area including the perimeter.
-// A = i + b/2 - 1
-// i - interior points		b - boundary points
+// a = i + b/2 - 1
+// a - Area from shoelace formula.
+// i - interior points
+// b - boundary points (perimeter)
+// Our answer is i + b which can be calculated as:
+// i + b = a + b/2 + 1
 func getArea(perim []Point) int {
-	i := getInnerArea(perim)
+	a := getInnerArea(perim)
 	b := len(perim)
-	a := i + (b / 2) + 1
-	return a
+	ib := a + (b / 2) + 1
+	return ib
 }
 
 // Uses Shoelace Formula to calculate the inside area.

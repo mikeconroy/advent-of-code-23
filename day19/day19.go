@@ -77,8 +77,63 @@ func part1(input []string) string {
 	return fmt.Sprint(totalAccepted)
 }
 
+/*
+ * x,m,a,s can have a value from 1 to 4,000.
+ * Calculate all possible combinations that can be accepted.
+ *
+ * Calculate by considering ranges with each rule encountered creating new ranges.
+ * 		E.g. in{s<1351:px,qqz} -> produces the ranges:
+ *			[0<x<4000,0<m<4000,0<a<4000,0<s<1351] -> px{a<2006:qkq,m>2090:A,rfg} -> [0<x<4000,0<m<4000,0<a<2006,0<s<1351] -> qkq...
+ *																				 -> [0<x<4000,0<m>2090,0<a>=2006,0<s<1351] -> A -> Sum of all combinations in the ranges. 4,000 * 2,090 * 4,000 * 1,251?
+ *																				 -> [0<x<4000,0<m<=2090,0<a>=2006,0<s<1351] -> rfg...
+ *			[1<x<4000,1<m<4000,1<a<4000,1<s<4000] -> qqz...
+ */
 func part2(input []string) string {
-	return fmt.Sprint(0)
+	workflows, _ := readInput(input)
+	toProcess := []PartRange{{1, 2000, 1, 2000, 1, 2000, 1, 2000, "in"}}
+	var accepted []PartRange
+	// for len(toProcess) > 0 {
+
+	// }
+	result := calculateResult(accepted)
+	return fmt.Sprint(result)
+}
+
+type PartRange struct {
+	minX, maxX, minM, maxM, minA, maxA, minS, maxS int
+	wfId                                           string
+}
+
+func calculateResult(ranges []PartRange) (result int) {
+	// for _, r := range ranges {
+	// 	for x := r.minX; x <= r.maxX; x++ {
+	// 		for m := r.minM; m <= r.maxM; m++ {
+	// 			for a := r.minA; a <= r.maxA; a++ {
+	// 				for s := r.minS; s <= r.maxS; s++ {
+	// 					result += x + m + a + s
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+	for _, r := range ranges {
+		lenX := r.maxX - r.minX + 1
+		lenM := r.maxM - r.minM + 1
+		lenA := r.maxA - r.minS + 1
+		lenS := r.maxS - r.minS + 1
+
+		sumX := (lenX * (r.minX + r.maxX)) / 2
+		sumM := (lenM * (r.minM + r.maxM)) / 2
+		sumA := (lenA * (r.minA + r.maxA)) / 2
+		sumS := (lenS * (r.minS + r.maxS)) / 2
+
+		result += sumX * lenM * lenA * lenS
+		result += sumM * lenX * lenA * lenS
+		result += sumA * lenX * lenM * lenS
+		result += sumS * lenX * lenM * lenA
+	}
+
+	return result
 }
 
 func processWorkflow(wf Workflow, part Part) string {

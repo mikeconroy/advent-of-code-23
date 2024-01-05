@@ -49,7 +49,6 @@ func main() {
 		day17.Run,
 		day18.Run,
 		day19.Run,
-		day19.Run,
 	}
 
 	if *dayToRun == 0 {

@@ -90,12 +90,128 @@ func part1(input []string) string {
  */
 func part2(input []string) string {
 	workflows, _ := readInput(input)
-	toProcess := []PartRange{{1, 2000, 1, 2000, 1, 2000, 1, 2000, "in"}}
+	toProcess := []PartRange{{1, 4000, 1, 4000, 1, 4000, 1, 4000, "in"}}
 	var accepted []PartRange
-	// for len(toProcess) > 0 {
+	for len(toProcess) > 0 {
+		pRange := toProcess[0]
+		if pRange.wfId == "A" {
+			accepted = append(accepted, pRange)
+			toProcess = toProcess[1:]
+			continue
+		} else if pRange.wfId == "R" {
+			toProcess = toProcess[1:]
+			continue
+		}
 
-	// }
-	result := calculateResult(accepted)
+		wf := workflows[pRange.wfId]
+		// There will be a new range per rule + the range for the default path
+		newRanges := make([]PartRange, len(wf.rules)+1)
+		for i, _ := range newRanges {
+			newRanges[i] = pRange
+		}
+
+		// This code could be cleaned up to be less repetitive and broke into functions.
+		// Could have made the categories on the ranges a map so we didn't need the if for every category.
+		// Instead would have referenced like newRanges[rangeIndex][rule.cat] ...
+		for rangeIndex, rule := range wf.rules {
+			if rule.cat == x {
+				if rule.op == gt {
+					if newRanges[rangeIndex].minX <= rule.val {
+						newRanges[rangeIndex].minX = rule.val + 1
+						newRanges[rangeIndex].wfId = rule.wfId
+					}
+					for i := rangeIndex + 1; i < len(newRanges); i++ {
+						if newRanges[i].maxX > rule.val {
+							newRanges[i].maxX = rule.val
+						}
+					}
+				} else if rule.op == lt {
+					if newRanges[rangeIndex].maxX > rule.val {
+						newRanges[rangeIndex].maxX = rule.val - 1
+						newRanges[rangeIndex].wfId = rule.wfId
+					}
+					for i := rangeIndex + 1; i < len(newRanges); i++ {
+						if newRanges[i].minX < rule.val {
+							newRanges[i].minX = rule.val
+						}
+					}
+				}
+			} else if rule.cat == m {
+				if rule.op == gt {
+					if newRanges[rangeIndex].minM <= rule.val {
+						newRanges[rangeIndex].minM = rule.val + 1
+						newRanges[rangeIndex].wfId = rule.wfId
+					}
+					for i := rangeIndex + 1; i < len(newRanges); i++ {
+						if newRanges[i].maxM > rule.val {
+							newRanges[i].maxM = rule.val
+						}
+					}
+				} else if rule.op == lt {
+					if newRanges[rangeIndex].maxM > rule.val {
+						newRanges[rangeIndex].maxM = rule.val - 1
+						newRanges[rangeIndex].wfId = rule.wfId
+					}
+					for i := rangeIndex + 1; i < len(newRanges); i++ {
+						if newRanges[i].minM < rule.val {
+							newRanges[i].minM = rule.val
+						}
+					}
+				}
+			} else if rule.cat == a {
+				if rule.op == gt {
+					if newRanges[rangeIndex].minA <= rule.val {
+						newRanges[rangeIndex].minA = rule.val + 1
+						newRanges[rangeIndex].wfId = rule.wfId
+					}
+					for i := rangeIndex + 1; i < len(newRanges); i++ {
+						if newRanges[i].maxA > rule.val {
+							newRanges[i].maxA = rule.val
+						}
+					}
+				} else if rule.op == lt {
+					if newRanges[rangeIndex].maxA > rule.val {
+						newRanges[rangeIndex].maxA = rule.val - 1
+						newRanges[rangeIndex].wfId = rule.wfId
+					}
+					for i := rangeIndex + 1; i < len(newRanges); i++ {
+						if newRanges[i].minA < rule.val {
+							newRanges[i].minA = rule.val
+						}
+					}
+				}
+			} else if rule.cat == s {
+				if rule.op == gt {
+					if newRanges[rangeIndex].minS <= rule.val {
+						newRanges[rangeIndex].minS = rule.val + 1
+						newRanges[rangeIndex].wfId = rule.wfId
+					}
+					for i := rangeIndex + 1; i < len(newRanges); i++ {
+						if newRanges[i].maxS > rule.val {
+							newRanges[i].maxS = rule.val
+						}
+					}
+				} else if rule.op == lt {
+					if newRanges[rangeIndex].maxS > rule.val {
+						newRanges[rangeIndex].maxS = rule.val - 1
+						newRanges[rangeIndex].wfId = rule.wfId
+					}
+					for i := rangeIndex + 1; i < len(newRanges); i++ {
+						if newRanges[i].minS < rule.val {
+							newRanges[i].minS = rule.val
+						}
+					}
+				}
+			}
+		}
+		newRanges[len(newRanges)-1].wfId = wf.def
+		toProcess = append(toProcess, newRanges...)
+		toProcess = toProcess[1:]
+	}
+	result := 0
+	for _, pRange := range accepted {
+		result += (pRange.maxX - pRange.minX + 1) * (pRange.maxM - pRange.minM + 1) * (pRange.maxA - pRange.minA + 1) * (pRange.maxS - pRange.minS + 1)
+	}
 	return fmt.Sprint(result)
 }
 
@@ -104,6 +220,9 @@ type PartRange struct {
 	wfId                                           string
 }
 
+// This code was wrote for Part 2 when I thought we had to calculate the result similar to Part 1.
+// I.e. the sum of the categories for all combinations.
+// However, we actually needed the number of distinct combinations so this code was not required.
 func calculateResult(ranges []PartRange) (result int) {
 	// for _, r := range ranges {
 	// 	for x := r.minX; x <= r.maxX; x++ {

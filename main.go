@@ -5,14 +5,6 @@ import (
 	"fmt"
 
 	"github.com/mikeconroy/advent-of-code-23/day1"
-	"github.com/mikeconroy/advent-of-code-23/day2"
-	"github.com/mikeconroy/advent-of-code-23/day3"
-	"github.com/mikeconroy/advent-of-code-23/day4"
-	"github.com/mikeconroy/advent-of-code-23/day5"
-	"github.com/mikeconroy/advent-of-code-23/day6"
-	"github.com/mikeconroy/advent-of-code-23/day7"
-	"github.com/mikeconroy/advent-of-code-23/day8"
-	"github.com/mikeconroy/advent-of-code-23/day9"
 	"github.com/mikeconroy/advent-of-code-23/day10"
 	"github.com/mikeconroy/advent-of-code-23/day11"
 	"github.com/mikeconroy/advent-of-code-23/day12"
@@ -22,6 +14,15 @@ import (
 	"github.com/mikeconroy/advent-of-code-23/day16"
 	"github.com/mikeconroy/advent-of-code-23/day17"
 	"github.com/mikeconroy/advent-of-code-23/day18"
+	"github.com/mikeconroy/advent-of-code-23/day19"
+	"github.com/mikeconroy/advent-of-code-23/day2"
+	"github.com/mikeconroy/advent-of-code-23/day3"
+	"github.com/mikeconroy/advent-of-code-23/day4"
+	"github.com/mikeconroy/advent-of-code-23/day5"
+	"github.com/mikeconroy/advent-of-code-23/day6"
+	"github.com/mikeconroy/advent-of-code-23/day7"
+	"github.com/mikeconroy/advent-of-code-23/day8"
+	"github.com/mikeconroy/advent-of-code-23/day9"
 )
 
 func main() {
@@ -47,6 +48,8 @@ func main() {
 		day16.Run,
 		day17.Run,
 		day18.Run,
+		day19.Run,
+		day19.Run,
 	}
 
 	if *dayToRun == 0 {

@@ -35,8 +35,39 @@ func part1(input []string) string {
 	return fmt.Sprint(highCount * lowCount)
 }
 
+// Uses the solution proposed by: https://www.reddit.com/r/adventofcode/comments/18mtwrs/comment/ke6o1i3
 func part2(input []string) string {
-	return fmt.Sprint(0)
+	modules := loadInput(input)
+	var toProcess []Pulse
+	btnPresses := 0
+	// JZ is the Conjuction module that sends a high to our target (RX).
+	// To send a high JZ needs to have received a High from all of it's own inputs (4 of them).
+	// To work out when this happens we find the number of presses for each to separately send a High pulse.
+	// The result is then these 4 multiplied together to give us the LCM when all 4 send a High Pulse after the same Button Press.
+	highToJz := make(map[string]int)
+	for len(highToJz) < 4 {
+		toProcess = append(toProcess, Pulse{to: "broadcaster", pType: low, from: "button"})
+		btnPresses++
+		for len(toProcess) > 0 {
+			pulse := toProcess[0]
+			mod := modules[pulse.to]
+			// fmt.Println("Sending pulse:", pulse.String())
+			newPulses := mod.receivePulse(pulse)
+			// fmt.Println(len(newPulses), "added on from", pulse.to)
+			toProcess = append(toProcess, newPulses...)
+			toProcess = toProcess[1:]
+			// fmt.Println(toProcess)
+			if pulse.to == "jz" && pulse.pType == high {
+				highToJz[pulse.from] = btnPresses
+			}
+		}
+	}
+
+	result := 1
+	for _, presses := range highToJz {
+		result *= presses
+	}
+	return fmt.Sprint(result)
 }
 
 type Destination interface {

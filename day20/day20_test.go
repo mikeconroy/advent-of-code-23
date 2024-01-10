@@ -18,9 +18,10 @@ func TestDay20Part1(t *testing.T) {
 	}
 }
 
-func TestDay20Part2(t *testing.T) {
-	input := utils.ReadFileIntoSlice("input_test")
-	if part2(input) != "0" {
-		t.Fatal("Day 20 - Part 2 output should be xxx")
-	}
-}
+// No test data provided for Day 20 P2
+// func TestDay20Part2(t *testing.T) {
+// 	input := utils.ReadFileIntoSlice("input_test")
+// 	if part2(input) != "0" {
+// 		t.Fatal("Day 20 - Part 2 output should be xxx")
+// 	}
+// }

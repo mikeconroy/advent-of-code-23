@@ -12,51 +12,27 @@ func Run() (string, string) {
 	return part1(input), part2(input)
 }
 
-// Structured so each Module can broadcast pulses to the next destination.
-// Needs to be refactored so the main loop orchestrates the pulses
-// As we need to process pulses in order.
-// Broadcast -> a,b,c needs to complete sending pulses before a then sends out pulses.
-// Change the broadcastPulse func -> return a list of pulses to send instead.
-// Then have the main loop store these in an array to process in order.
 func part1(input []string) string {
 	modules := loadInput(input)
-	for key, val := range modules {
-		fmt.Println(key, val.getModule())
-	}
-
-	fmt.Println("Inverter", modules["inv"])
-	return fmt.Sprint(0)
-}
-
-func loadInput(in []string) map[string]Destination {
-	dests := make(map[string][]string)
-	modules := make(map[string]Destination)
-	for _, line := range in {
-		id := strings.Split(line, " -> ")[0][1:]
-		fmt.Printf("'%s'", id)
-		if strings.Contains(line, "broadcaster") {
-			id = "broadcaster"
-			modules["broadcaster"] = &Broadcaster{mod: &Module{id: "broadcaster", pulsesReceived: make(map[PulseType]int)}}
-		} else if line[0] == '%' {
-			modules[id] = &FlipFlop{isOn: false, mod: &Module{id: id, pulsesReceived: make(map[PulseType]int)}}
-		} else if line[0] == '&' {
-			modules[id] = &Conjuction{recentPulse: make(map[string]PulseType), mod: &Module{id: id, pulsesReceived: make(map[PulseType]int)}}
-		}
-
-		targets := strings.Split(line, "-> ")[1]
-		dests[id] = strings.Split(targets, ", ")
-	}
-
-	fmt.Println(modules)
-
-	for source, targets := range dests {
-		for _, target := range targets {
-			modules[source].getModule().registerDestination(modules[target])
-			modules[target].registerSource(source)
+	var toProcess []Pulse
+	// Could be refactored to find the loop instead of iterating over all 1,000 button presses.
+	// But this is performant enough.
+	for i := 0; i < 1000; i++ {
+		toProcess = append(toProcess, Pulse{to: "broadcaster", pType: low, from: "button"})
+		for len(toProcess) > 0 {
+			pulse := toProcess[0]
+			mod := modules[pulse.to]
+			// fmt.Println("Sending pulse:", pulse.String())
+			newPulses := mod.receivePulse(pulse)
+			// fmt.Println(len(newPulses), "added on from", pulse.to)
+			toProcess = append(toProcess, newPulses...)
+			toProcess = toProcess[1:]
+			// fmt.Println(toProcess)
 		}
 	}
 
-	return modules
+	highCount, lowCount := getTotalPulses(modules)
+	return fmt.Sprint(highCount * lowCount)
 }
 
 func part2(input []string) string {
@@ -64,7 +40,7 @@ func part2(input []string) string {
 }
 
 type Destination interface {
-	receivePulse(Pulse)
+	receivePulse(Pulse) []Pulse
 	getModule() *Module
 	registerSource(string)
 }
@@ -73,10 +49,11 @@ type Broadcaster struct {
 	mod *Module
 }
 
-func (b *Broadcaster) receivePulse(pulse Pulse) {
-	mod := b.getModule()
-	mod.pulsesReceived[pulse.pType] = mod.pulsesReceived[pulse.pType] + 1
-	broadcastPulse(pulse, mod.destinations)
+func (b *Broadcaster) receivePulse(pulse Pulse) []Pulse {
+	b.mod.pulsesReceived[pulse.pType] = b.mod.pulsesReceived[pulse.pType] + 1
+
+	return newPulses(pulse.pType, b.mod.destinations, b.mod.id)
+	// broadcastPulse(pulse, b.mod.destinations)
 }
 
 func (b *Broadcaster) getModule() *Module {
@@ -90,18 +67,23 @@ type FlipFlop struct {
 	mod  *Module
 }
 
-func (ff *FlipFlop) receivePulse(pulse Pulse) {
+func (ff *FlipFlop) receivePulse(pulse Pulse) []Pulse {
+	ff.mod.pulsesReceived[pulse.pType] = ff.mod.pulsesReceived[pulse.pType] + 1
+	// fmt.Println("FlipFlop", ff.mod.id, "Received pulse from", pulse.from, "of type", pulse.pType, "isOn:", ff.isOn)
+	var newPType PulseType
 	if pulse.pType == low {
-		newPulse := Pulse{from: ff.mod.id}
+		ff.isOn = !ff.isOn
 		if ff.isOn {
-			newPulse.pType = high
+			newPType = high
 		} else {
-			newPulse.pType = low
+			newPType = low
 		}
 
-		broadcastPulse(newPulse, ff.getModule().destinations)
-		ff.isOn = !ff.isOn
+		// broadcastPulse(newPulse, ff.getModule().destinations)
+		return newPulses(newPType, ff.mod.destinations, ff.mod.id)
 	}
+
+	return nil
 }
 
 func (ff *FlipFlop) getModule() *Module {
@@ -115,7 +97,8 @@ type Conjuction struct {
 	mod         *Module
 }
 
-func (c *Conjuction) receivePulse(pulse Pulse) {
+func (c *Conjuction) receivePulse(pulse Pulse) []Pulse {
+	c.mod.pulsesReceived[pulse.pType] = c.mod.pulsesReceived[pulse.pType] + 1
 	c.recentPulse[pulse.from] = pulse.pType
 	allHigh := true
 	for _, pType := range c.recentPulse {
@@ -124,11 +107,17 @@ func (c *Conjuction) receivePulse(pulse Pulse) {
 			break
 		}
 	}
+
+	var newPType PulseType
 	if allHigh {
-		broadcastPulse(Pulse{from: c.mod.id, pType: low}, c.mod.destinations)
+		newPType = low
+		// broadcastPulse(Pulse{from: c.mod.id, pType: low}, c.mod.destinations)
 	} else {
-		broadcastPulse(Pulse{from: c.mod.id, pType: high}, c.mod.destinations)
+		newPType = high
+		// broadcastPulse(Pulse{from: c.mod.id, pType: high}, c.mod.destinations)
 	}
+
+	return newPulses(newPType, c.mod.destinations, c.mod.id)
 }
 
 func (c *Conjuction) getModule() *Module {
@@ -139,9 +128,26 @@ func (c *Conjuction) registerSource(source string) {
 	c.recentPulse[source] = low
 }
 
+type Outputter struct {
+	mod *Module
+}
+
+func (o *Outputter) receivePulse(pulse Pulse) []Pulse {
+	o.mod.pulsesReceived[pulse.pType] = o.mod.pulsesReceived[pulse.pType] + 1
+	return nil
+}
+
+func (o *Outputter) getModule() *Module {
+	return o.mod
+}
+
+func (o *Outputter) registerSource(source string) {
+}
+
 type Pulse struct {
 	pType PulseType
 	from  string
+	to    string
 }
 
 type PulseType int
@@ -165,4 +171,67 @@ func broadcastPulse(pulse Pulse, destinations []Destination) {
 	for _, dest := range destinations {
 		dest.receivePulse(pulse)
 	}
+}
+
+func newPulses(pType PulseType, dests []Destination, from string) []Pulse {
+	newPulses := make([]Pulse, len(dests))
+	for i, dest := range dests {
+		newPulses[i] = Pulse{pType: pType, from: from, to: dest.getModule().id}
+	}
+	return newPulses
+}
+
+func (p Pulse) String() string {
+	var pt string
+	if p.pType == high {
+		pt = "high"
+	} else {
+		pt = "low"
+	}
+	return fmt.Sprintf("%s -%s-> %s", p.from, pt, p.to)
+}
+
+func getTotalPulses(mods map[string]Destination) (highCount, lowCount int) {
+	for _, mod := range mods {
+		// fmt.Println(mod.getModule().id, mod.getModule().pulsesReceived)
+		highCount += mod.getModule().pulsesReceived[PulseType(high)]
+		lowCount += mod.getModule().pulsesReceived[PulseType(low)]
+		// fmt.Println("Pulses received by ", mod.getModule().id, high, low)
+	}
+	return highCount, lowCount
+}
+func loadInput(in []string) map[string]Destination {
+	dests := make(map[string][]string)
+	modules := make(map[string]Destination)
+	for _, line := range in {
+		id := strings.Split(line, " -> ")[0][1:]
+		// fmt.Printf("'%s'", id)
+		if line[0] == '%' {
+			modules[id] = &FlipFlop{isOn: false, mod: &Module{id: id, pulsesReceived: make(map[PulseType]int)}}
+		} else if line[0] == '&' {
+			modules[id] = &Conjuction{recentPulse: make(map[string]PulseType), mod: &Module{id: id, pulsesReceived: make(map[PulseType]int)}}
+		} else {
+			id = "broadcaster"
+			modules["broadcaster"] = &Broadcaster{mod: &Module{id: "broadcaster", pulsesReceived: make(map[PulseType]int)}}
+		}
+
+		targets := strings.Split(line, "-> ")[1]
+		dests[id] = strings.Split(targets, ", ")
+	}
+
+	// fmt.Println(modules)
+
+	for source, targets := range dests {
+		for _, target := range targets {
+			if modules[target] == nil {
+				modules[target] = &Outputter{mod: &Module{id: target, pulsesReceived: make(map[PulseType]int)}}
+			}
+			// fmt.Println("Registering Source:", source, "Dest:", target)
+			modules[source].getModule().registerDestination(modules[target])
+			// fmt.Println("registering source", modules[source], modules[target])
+			modules[target].registerSource(source)
+		}
+	}
+
+	return modules
 }

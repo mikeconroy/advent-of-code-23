@@ -34,9 +34,7 @@ func part1(input []string, steps int) string {
 }
 
 func processStep(positions map[Point]bool, plots map[Point]Plot) map[Point]bool {
-
 	newPositions := make(map[Point]bool)
-
 	for pos, _ := range positions {
 		neighbours := []Point{
 			{x: pos.x, y: pos.y - 1},
@@ -44,9 +42,8 @@ func processStep(positions map[Point]bool, plots map[Point]Plot) map[Point]bool 
 			{x: pos.x - 1, y: pos.y},
 			{x: pos.x + 1, y: pos.y},
 		}
-
 		for _, neighbour := range neighbours {
-			if plots[neighbour] == GARDEN && !newPositions[neighbour] {
+			if plot, ok := plots[neighbour]; ok && plot == GARDEN && !newPositions[neighbour] {
 				newPositions[neighbour] = true
 			}
 		}
@@ -54,7 +51,9 @@ func processStep(positions map[Point]bool, plots map[Point]Plot) map[Point]bool 
 	return newPositions
 }
 
+// 26501365 steps with the map repeating in all directions infinitely.
 func part2(input []string) string {
+	fmt.Println(part1(input, 200))
 	return fmt.Sprint(0)
 }
 

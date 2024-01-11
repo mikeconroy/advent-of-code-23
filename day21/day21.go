@@ -51,9 +51,11 @@ func processStep(positions map[Point]bool, plots map[Point]Plot) map[Point]bool 
 	return newPositions
 }
 
-// 26501365 steps with the map repeating in all directions infinitely.
+// 26_501_365 steps with the map repeating in all directions infinitely.
+// We only care about the outer points - the other points just flip-flop on and off between themselves.
+// Outer points continue to expand and move outwards increasing the of plots reached.
 func part2(input []string) string {
-	fmt.Println(part1(input, 200))
+	// fmt.Println(part1(input, 200))
 	return fmt.Sprint(0)
 }
 

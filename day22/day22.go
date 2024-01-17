@@ -23,9 +23,13 @@ type Brick struct {
 }
 
 func part1(input []string) string {
+	// Load the bricks into a map based on layer [Layer/Z] = []Brick
 	bricksByLayer := parseBricks(input)
+	// Let the bricks fall down and update the map with the new positions of the bricks.
 	bricksByLayer = dropBricks(bricksByLayer)
 	fmt.Println(bricksByLayer)
+	// Count how many bricks solely support other bricks - these bricks cannot be deleted.
+	// Result = Total Bricks - Number of bricks that cannot be deleted.
 	return fmt.Sprint(len(bricksByLayer))
 }
 

@@ -63,7 +63,40 @@ func dropBricks(bricksByLayer map[int][]Brick) map[int][]Brick {
 // Check the layers below the brick for any bricks already occupying a point in the brick's path.
 // Once a layer is found with the collision - the new brick is the same but z = collision layer + 1
 func dropBrick(brick Brick, bricksByLayer map[int][]Brick) Brick {
-	return brick
+	// Work down each layer until a collision is found.
+	newLayer := brick.points[0].z
+	for currLayer := newLayer; currLayer > 0; currLayer-- {
+		newLayer = currLayer - 1
+		collision := isCollisionAtLayer(brick, bricksByLayer[newLayer])
+		if collision {
+			break
+		}
+	}
+	return updateBrickLayer(brick, newLayer+1)
+}
+
+func updateBrickLayer(brick Brick, newLayer int) Brick {
+	newBrick := brick
+	layerDiff := newBrick.points[0].z - newLayer
+	for i, _ := range newBrick.points {
+		newBrick.points[i].z -= layerDiff
+	}
+	return newBrick
+}
+
+func isCollisionAtLayer(brick Brick, bricksAtLayer []Brick) bool {
+	// At each layer check all the bricks at that layer.
+	for _, brickAtLayer := range bricksAtLayer {
+		// Compare the x & Y coords of the brick falling and the layer's bricks coords.
+		for _, point := range brick.points {
+			for _, brickAtNewLayerPoints := range brickAtLayer.points {
+				if point.x == brickAtNewLayerPoints.x && point.y == brickAtNewLayerPoints.y {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func parseBricks(in []string) map[int][]Brick {

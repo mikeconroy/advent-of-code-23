@@ -75,17 +75,14 @@ func part2(input []string) string {
 				if brick.points[0].z == 1 || bricksDropped[id] {
 					continue
 				}
-				// fmt.Println("Brick", brick.id, "Checking for support")
 				brickIsSupported := false
 				for supportedById := range brick.isSupportedBy {
 					if !bricksDropped[supportedById] {
-						// fmt.Println("Brick", brick.id, "Is supported by", supportedById)
 						brickIsSupported = true
 						break
 					}
 				}
 				if !brickIsSupported {
-					// fmt.Println("Brick", id, "is unsupported")
 					bricksDropped[id] = true
 					bricksStillDropping = true
 				}
@@ -95,17 +92,6 @@ func part2(input []string) string {
 	}
 
 	return fmt.Sprint(totalBricksMoved)
-}
-
-func removeBrickFromGrid(brick Brick, grid map[Point]int) map[Point]int {
-	newGrid := make(map[Point]int)
-	for key, value := range grid {
-		if value != brick.id {
-			newGrid[key] = value
-		}
-	}
-
-	return newGrid
 }
 
 func dropBricks(bricks map[int]Brick, grid map[Point]int) (map[int]Brick, map[Point]int, int) {

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/mikeconroy/advent-of-code-23/utils"
+	"golang.org/x/exp/maps"
 )
 
 func Run() (string, string) {
@@ -18,90 +19,102 @@ type Point struct {
 }
 
 type Brick struct {
-	points  []Point
-	axisDir string
+	id            int
+	points        []Point
+	axisDir       string
+	isSupportedBy map[int]bool
 }
 
 func part1(input []string) string {
-	// Load the bricks into a map based on layer [Layer/Z] = []Brick
-	bricksByLayer := parseBricks(input)
+	bricks, grid := parseBricks(input)
 	// Let the bricks fall down and update the map with the new positions of the bricks.
-	bricksByLayer = dropBricks(bricksByLayer)
-	fmt.Println(bricksByLayer)
+	bricks, grid = dropBricks(bricks, grid)
 	// Count how many bricks solely support other bricks - these bricks cannot be deleted.
 	// Result = Total Bricks - Number of bricks that cannot be deleted.
-	return fmt.Sprint(len(bricksByLayer))
+	bricksToNotBeDisintegrated := calculateBricksNotToDisintegrate(bricks, grid)
+	result := len(bricks) - len(bricksToNotBeDisintegrated)
+	return fmt.Sprint(result)
+}
+
+func calculateBricksNotToDisintegrate(bricks map[int]Brick, grid map[Point]int) map[int]bool {
+	importantBricks := make(map[int]bool)
+	for point, id := range grid {
+		if point.z == 1 {
+			continue
+		}
+		currBrick := bricks[id]
+		pointBelow := point
+		pointBelow.z = point.z - 1
+		idBelow := grid[pointBelow]
+		if idBelow != 0 && idBelow != currBrick.id {
+			currBrick.isSupportedBy[idBelow] = true
+		}
+	}
+	for _, brick := range bricks {
+		if len(brick.isSupportedBy) == 1 {
+			importantBricks[maps.Keys(brick.isSupportedBy)[0]] = true
+		}
+	}
+	return importantBricks
 }
 
 func part2(input []string) string {
 	return fmt.Sprint(0)
 }
 
-func dropBricks(bricksByLayer map[int][]Brick) map[int][]Brick {
-	totalLayers := len(bricksByLayer) - 1
-	layersProcessed := 0
+func dropBricks(bricks map[int]Brick, grid map[Point]int) (map[int]Brick, map[Point]int) {
+	brickMoved := true
 
-	droppedBricksByLayer := make(map[int][]Brick, len(bricksByLayer))
-	droppedBricksByLayer[1] = bricksByLayer[1]
-	// Start at layer 2 - as bricks at layer 1 are already as low as they can go.
-	for layer := 2; layersProcessed < totalLayers; layer++ {
-		bricksAtLayer := bricksByLayer[layer]
-		fmt.Println(layer, bricksAtLayer, layersProcessed, totalLayers)
-		if len(bricksAtLayer) > 0 {
-			layersProcessed++
-			for _, brick := range bricksAtLayer {
-				newBrick := dropBrick(brick, droppedBricksByLayer)
-				newBrickLayer := newBrick.points[0].z
-				droppedBricksByLayer[newBrickLayer] = append(droppedBricksByLayer[newBrickLayer], newBrick)
+	// Loop until all bricks have dropped as far as possible
+	for brickMoved {
+		brickMoved = false
+		// Loop over each brick
+		for _, currBrick := range bricks {
+			// Brick is already on the ground so can't fall futher
+			if currBrick.points[0].z == 1 {
+				continue
 			}
-		}
-	}
 
-	return droppedBricksByLayer
-}
-
-// Check the layers below the brick for any bricks already occupying a point in the brick's path.
-// Once a layer is found with the collision - the new brick is the same but z = collision layer + 1
-func dropBrick(brick Brick, bricksByLayer map[int][]Brick) Brick {
-	// Work down each layer until a collision is found.
-	newLayer := brick.points[0].z
-	for currLayer := newLayer; currLayer > 0; currLayer-- {
-		newLayer = currLayer - 1
-		collision := isCollisionAtLayer(brick, bricksByLayer[newLayer])
-		if collision {
-			break
-		}
-	}
-	return updateBrickLayer(brick, newLayer+1)
-}
-
-func updateBrickLayer(brick Brick, newLayer int) Brick {
-	newBrick := brick
-	layerDiff := newBrick.points[0].z - newLayer
-	for i, _ := range newBrick.points {
-		newBrick.points[i].z -= layerDiff
-	}
-	return newBrick
-}
-
-func isCollisionAtLayer(brick Brick, bricksAtLayer []Brick) bool {
-	// At each layer check all the bricks at that layer.
-	for _, brickAtLayer := range bricksAtLayer {
-		// Compare the x & Y coords of the brick falling and the layer's bricks coords.
-		for _, point := range brick.points {
-			for _, brickAtNewLayerPoints := range brickAtLayer.points {
-				if point.x == brickAtNewLayerPoints.x && point.y == brickAtNewLayerPoints.y {
-					return true
+			currLayer := currBrick.points[0].z
+			newLayer := currLayer
+			keepDropping := true
+			for keepDropping && newLayer > 1 {
+				newLayer--
+				for _, point := range currBrick.points {
+					point.z = newLayer
+					if grid[point] != 0 {
+						keepDropping = false
+						newLayer++
+						break
+					}
 				}
 			}
+			if newLayer != currLayer {
+				brickMoved = true
+				newBrick := currBrick
+				// Update the grid to remove the old point
+				for _, point := range currBrick.points {
+					delete(grid, point)
+				}
+				layerDiff := newBrick.points[0].z - newLayer
+				for i, _ := range newBrick.points {
+					newBrick.points[i].z -= layerDiff
+
+					grid[newBrick.points[i]] = newBrick.id
+				}
+				bricks[newBrick.id] = newBrick
+			}
+
 		}
 	}
-	return false
+	return bricks, grid
 }
 
-func parseBricks(in []string) map[int][]Brick {
-	bricksByLayer := make(map[int][]Brick)
-	for _, line := range in {
+func parseBricks(in []string) (map[int]Brick, map[Point]int) {
+	bricksMap := make(map[int]Brick)
+	grid := make(map[Point]int)
+	for i, line := range in {
+		id := i + 1
 		ends := strings.Split(line, "~")
 		end1 := strings.Split(ends[0], ",")
 		end2 := strings.Split(ends[1], ",")
@@ -125,10 +138,12 @@ func parseBricks(in []string) map[int][]Brick {
 			end = point2.z
 		}
 
+		grid[point1] = id
+		grid[point2] = id
+
 		currentPoint := point1
 		brickPoints := make([]Point, end-start+1)
 		brickPoints[0] = point1
-
 		for j := start + 1; j < end; j++ {
 			if axisDirection == "x" {
 				currentPoint.x += 1
@@ -137,14 +152,15 @@ func parseBricks(in []string) map[int][]Brick {
 			} else if axisDirection == "z" {
 				currentPoint.z += 1
 			}
-
 			brickPoints[j-start] = currentPoint
+			grid[currentPoint] = id
 		}
 		brickPoints[len(brickPoints)-1] = point2
+		newBrick := Brick{id: id, points: brickPoints, axisDir: axisDirection, isSupportedBy: make(map[int]bool)}
+		bricksMap[newBrick.id] = newBrick
 
-		bricksByLayer[point1.z] = append(bricksByLayer[point1.z], Brick{points: brickPoints, axisDir: axisDirection})
 	}
-	return bricksByLayer
+	return bricksMap, grid
 }
 
 func toInt(val string) int {

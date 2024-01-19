@@ -28,7 +28,7 @@ type Brick struct {
 func part1(input []string) string {
 	bricks, grid := parseBricks(input)
 	// Let the bricks fall down and update the map with the new positions of the bricks.
-	bricks, grid = dropBricks(bricks, grid)
+	bricks, grid, _ = dropBricks(bricks, grid)
 	// Count how many bricks solely support other bricks - these bricks cannot be deleted.
 	// Result = Total Bricks - Number of bricks that cannot be deleted.
 	bricksToNotBeDisintegrated := calculateBricksNotToDisintegrate(bricks, grid)
@@ -59,16 +59,63 @@ func calculateBricksNotToDisintegrate(bricks map[int]Brick, grid map[Point]int) 
 }
 
 func part2(input []string) string {
-	return fmt.Sprint(0)
+	bricks, grid := parseBricks(input)
+	bricks, grid, _ = dropBricks(bricks, grid)
+	bricksToNotBeDisintegrated := calculateBricksNotToDisintegrate(bricks, grid)
+
+	totalBricksMoved := 0
+	for disintegrateId := range bricksToNotBeDisintegrated {
+		bricksDropped := make(map[int]bool)
+		bricksDropped[disintegrateId] = true
+		bricksStillDropping := true
+		for bricksStillDropping {
+			bricksStillDropping = false
+			for id, brick := range bricks {
+				// Don't check ground layer. Don't check bricks that have already been marked as dropped.
+				if brick.points[0].z == 1 || bricksDropped[id] {
+					continue
+				}
+				// fmt.Println("Brick", brick.id, "Checking for support")
+				brickIsSupported := false
+				for supportedById := range brick.isSupportedBy {
+					if !bricksDropped[supportedById] {
+						// fmt.Println("Brick", brick.id, "Is supported by", supportedById)
+						brickIsSupported = true
+						break
+					}
+				}
+				if !brickIsSupported {
+					// fmt.Println("Brick", id, "is unsupported")
+					bricksDropped[id] = true
+					bricksStillDropping = true
+				}
+			}
+		}
+		totalBricksMoved += len(bricksDropped) - 1
+	}
+
+	return fmt.Sprint(totalBricksMoved)
 }
 
-func dropBricks(bricks map[int]Brick, grid map[Point]int) (map[int]Brick, map[Point]int) {
+func removeBrickFromGrid(brick Brick, grid map[Point]int) map[Point]int {
+	newGrid := make(map[Point]int)
+	for key, value := range grid {
+		if value != brick.id {
+			newGrid[key] = value
+		}
+	}
+
+	return newGrid
+}
+
+func dropBricks(bricks map[int]Brick, grid map[Point]int) (map[int]Brick, map[Point]int, int) {
 	brickMoved := true
+	bricksMoved := make(map[int]bool)
 
 	// Loop until all bricks have dropped as far as possible
 	for brickMoved {
 		brickMoved = false
-		// Loop over each brick
+
 		for _, currBrick := range bricks {
 			// Brick is already on the ground so can't fall futher
 			if currBrick.points[0].z == 1 {
@@ -92,7 +139,7 @@ func dropBricks(bricks map[int]Brick, grid map[Point]int) (map[int]Brick, map[Po
 			if newLayer != currLayer {
 				brickMoved = true
 				newBrick := currBrick
-				// Update the grid to remove the old point
+				// Update the grid to remove the old points
 				for _, point := range currBrick.points {
 					delete(grid, point)
 				}
@@ -103,11 +150,12 @@ func dropBricks(bricks map[int]Brick, grid map[Point]int) (map[int]Brick, map[Po
 					grid[newBrick.points[i]] = newBrick.id
 				}
 				bricks[newBrick.id] = newBrick
+				bricksMoved[newBrick.id] = true
 			}
 
 		}
 	}
-	return bricks, grid
+	return bricks, grid, len(bricksMoved)
 }
 
 func parseBricks(in []string) (map[int]Brick, map[Point]int) {
